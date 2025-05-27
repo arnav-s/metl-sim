@@ -9,11 +9,17 @@ import shutil
 import stat
 import subprocess
 import time
+from typing import Optional
 
 import utils
 
 
-def prep_for_squid(rosetta_minimal_dir, squid_dir, encryption_password):
+def prep_for_squid(
+        rosetta_minimal_dir: str,
+        squid_dir: str,
+        encryption_password: str,
+        split_size: Optional[int] = None):
+
     """ prepares the distribution for SQUID by compressing and splitting it """
     # could probably do this in pure python using tarfile package and
     # https://stackoverflow.com/questions/45250329/split-equivalent-of-gzip-files-in-python
@@ -41,10 +47,10 @@ def prep_for_squid(rosetta_minimal_dir, squid_dir, encryption_password):
                    "-in", tar_fn, "-out", tar_fn_encrypted, "-pass", "pass:{}".format(encryption_password)]
     subprocess.call(encrypt_cmd)
 
-    # split into files less than 1gb (let's go with 700mb just because)
-    # note: this might not work on windows or mac
-    split_cmd = ["split", "-b", "700m", tar_fn_encrypted, tar_fn_encrypted + "."]
-    subprocess.call(split_cmd)
+    # split into separate files (this used to be necessary for SQUID... no longer)
+    if split_size is not None:
+        split_cmd = ["split", "-b", f"{split_size}m", tar_fn_encrypted, tar_fn_encrypted + "."]
+        subprocess.call(split_cmd)
 
 
 def make_executable(fn):
@@ -116,7 +122,12 @@ def main(args):
         gen_minimal_distr(args.rosetta_main_dir, args.out_dir)
 
     if args.prep_for_squid:
-        prep_for_squid(args.out_dir, args.squid_dir, args.encryption_password)
+        prep_for_squid(
+            args.out_dir,
+            args.squid_dir,
+            args.encryption_password,
+            args.split_size
+        )
 
 
 if __name__ == "__main__":
@@ -142,6 +153,12 @@ if __name__ == "__main__":
     parser.add_argument("--prep_for_squid",
                         help="set this to also create a compressed and split version for squid",
                         action="store_true")
+
+    parser.add_argument("--split_size",
+                        help="the size of the split files in MB. if None, no splitting "
+                             "will be done. splitting used to be necessary for SQUID",
+                        type=int,
+                        default=None)
 
     parser.add_argument("--squid_dir",
                         help="the output directory where to place the compressed and split version for squid. "
