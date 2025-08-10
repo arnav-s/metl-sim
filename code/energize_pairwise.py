@@ -52,7 +52,7 @@ def prep_working_dir(template_dir, working_dir, pdb_fn, chain, variant,
         fill_templates(template_dir, chain, variant, relax_distance, relax_repeats, working_dir)
 
     # copy over files from the template dir that don't need to be changed
-    files_to_copy = ["flags_mutate", "flags_relax", "flags_relax_all", "flags_filter", "flags_centroid",
+    files_to_copy = ["flags_mutate", "flags_relax", "flags_relax_all", "flags_score_pairwise", "flags_filter", "flags_centroid",
                      "filter_3rd.xml", "total_hydrophobic_weights_version1.wts",
                      "total_hydrophobic_weights_version2.wts"]
 
@@ -100,9 +100,9 @@ def run_filter_step(rosetta_scripts_bin_fn, database_path, working_dir):
         raise RosettaError("Filter step did not execute successfully. Return code: {}".format(return_code))
 
 
-def run_centroid_step(score_jd2_bin_fn, database_path, working_dir):
-    centroid_cmd = [score_jd2_bin_fn, '-database', database_path, '@flags_centroid']
-    centroid_out_fn = join(working_dir, "centroid.out")
+def run_pairwise_step(score_pairwise_bin_fn, database_path, working_dir):
+    centroid_cmd = [score_pairwise_bin_fn, '-database', database_path, '@flags_score_pairwise']
+    centroid_out_fn = join(working_dir, "pairwise.out")
     with open(centroid_out_fn, "w") as f:
         return_code = subprocess.call(centroid_cmd, cwd=working_dir, stdout=f, stderr=f)
     if return_code != 0:
@@ -115,22 +115,22 @@ def get_rosetta_paths(rosetta_main_dir: str):
     if platform.system() == "Linux":
         relax_bin_fn = "relax.static.linuxgccrelease"
         rosetta_scripts_bin_fn = "rosetta_scripts.static.linuxgccrelease"
-        score_jd2_bin_fn = "score_jd2.static.linuxgccrelease"
+        score_pairwise_bin_fn = "residue_energy_breakdown.static.linuxgccrelease"
     elif platform.system() == "Darwin":
         relax_bin_fn = "relax.static.macosclangrelease"
         rosetta_scripts_bin_fn = "rosetta_scripts.static.macosclangrelease"
-        score_jd2_bin_fn = "score_jd2.static.macosclangrelease"
+        score_pairwise_bin_fn = "residue_energy_breakdown.static.macosclangrelease"
     else:
         raise ValueError("unsupported platform: {}".format(platform.system()))
 
     relax_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", relax_bin_fn))
     rosetta_scripts_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", rosetta_scripts_bin_fn))
-    score_jd2_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", score_jd2_bin_fn))
+    score_pairwise_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", score_pairwise_bin_fn))
 
     # path to the rosetta database
     database_path = abspath(join(rosetta_main_dir, "database"))
 
-    return relax_bin_fn, rosetta_scripts_bin_fn, score_jd2_bin_fn, database_path
+    return relax_bin_fn, rosetta_scripts_bin_fn, score_pairwise_bin_fn, database_path
 
 
 def run_rosetta_pipeline(rosetta_main_dir: str,
@@ -144,7 +144,7 @@ def run_rosetta_pipeline(rosetta_main_dir: str,
     all_start = time.time()
 
     # get the paths to the rosetta binaries and database
-    relax_bin_fn, rosetta_scripts_bin_fn, score_jd2_bin_fn, database_path = get_rosetta_paths(rosetta_main_dir)
+    relax_bin_fn, rosetta_scripts_bin_fn, score_pairwise_bin_fn, database_path = get_rosetta_paths(rosetta_main_dir)
 
     # this branch logic is just handling the special case of the "_wt" variant (no mutations)
     mt_run_time = 0
@@ -171,7 +171,7 @@ def run_rosetta_pipeline(rosetta_main_dir: str,
     # print("Filter step took {:.2f}".format(filt_run_time))
 
     cent_start_time = time.time()
-    run_centroid_step(score_jd2_bin_fn, database_path, working_dir)
+    run_pairwise_step(score_pairwise_bin_fn, database_path, working_dir)
     cent_run_time = time.time() - cent_start_time
     # print("Centroid step took {:.2f}".format(cent_run_time))
 
@@ -225,9 +225,9 @@ def run_single_variant(rosetta_main_dir, pdb_fn, chain, variant, rosetta_hparams
     # grab the start time for this variant
     start_time = time.time()
 
-    template_dir = "templates/energize_wd_template"
+    template_dir = "templates/energize_pairwise_wd_template"
     # todo: use a variant-specific working directory in the output directory (safer)
-    working_dir = "energize_wd"
+    working_dir = "energize_pairwise_wd"
 
     # if the working directory exists from a previously failed variant, remove it before starting new variant
     if isdir(working_dir):
@@ -254,14 +254,14 @@ def run_single_variant(rosetta_main_dir, pdb_fn, chain, variant, rosetta_hparams
     # place in a staging directory and combine with other variants that run during this job
     score_df = parse_score_sc(join(working_dir, "relax.sc"))
     filter_df = parse_score_sc(join(working_dir, "filter.sc"))
-    centroid_df = parse_score_sc(join(working_dir, "centroid.sc"))
+    pairwise_df = parse_score_sc(join(working_dir, "pairwise.sc"))
 
     # the total_score from filter and centroid probably won't be used, but let's keep them in just in case
     # just need to resolve the name conflict with the total_score from score_df
     filter_df.rename(columns={"total_score": "filter_total_score"}, inplace=True)
-    centroid_df.rename(columns={"total_score": "centroid_total_score"}, inplace=True)
+    pairwise_df.rename(columns={"total_score": "centroid_total_score"}, inplace=True)
 
-    full_df = pd.concat((score_df, filter_df, centroid_df), axis=1)
+    full_df = pd.concat((score_df, filter_df, pairwise_df), axis=1)
 
     # append info about this variant
     full_df.insert(0, "pdb_fn", [basename(pdb_fn)])
@@ -406,7 +406,7 @@ def main(args):
                 # if we are supposed to save the working directory, save it now
                 # the run_single_variant() function doesn't take care of this when there's an exception
                 # todo: if we end up using variant-specific working dir, update here
-                working_dir = "energize_wd"
+                working_dir = "energize_pairwise_wd"
                 if args.save_wd:
                     shutil.copytree(working_dir, join(log_dir, "wd_{}_{}_{}".format(basename(pdb_fn), variant, attempt)))
 
