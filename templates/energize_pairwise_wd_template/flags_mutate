@@ -1,0 +1,5 @@
+-s structure.pdb
+-parser:protocol mutate.xml
+-ignore_unrecognized_res  
+-nstruct 1
+-out:file:scorefile mutate.sc

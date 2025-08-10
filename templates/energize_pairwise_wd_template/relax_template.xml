@@ -1,0 +1,31 @@
+<ROSETTASCRIPTS>
+    <SCOREFXNS>
+        <ScoreFunction name="beta_sf" weights="beta_nov16_cart"/>
+    </SCOREFXNS>
+    <RESIDUE_SELECTORS>
+        <Neighborhood name="surrounding" resnums="{resnums}" distance="{relax_distance}"/>
+        <Not name="rest" selector="surrounding"/>
+    </RESIDUE_SELECTORS>
+    <TASKOPERATIONS>
+        <OperateOnResidueSubset name="repack_res" selector="surrounding">
+            <RestrictToRepackingRLT/>
+        </OperateOnResidueSubset>
+        <OperateOnResidueSubset name="no_repack" selector="rest">
+            <PreventRepackingRLT/>
+        </OperateOnResidueSubset>
+    </TASKOPERATIONS>
+    <MOVERS>
+        <!-- todo: disable_design should be true? does it matter? -->
+        <!-- TODO: Change scorefxn back to REF2015 if using that scoring function -->
+        <FastRelax name="relax"
+                   scorefxn="beta_sf"
+                   task_operations="repack_res,no_repack"
+                   disable_design="false"
+                   cartesian="true"
+                   repeats="{relax_repeats}">
+        </FastRelax>
+    </MOVERS>
+    <PROTOCOLS>
+        <Add mover="relax"/>
+    </PROTOCOLS>
+</ROSETTASCRIPTS>

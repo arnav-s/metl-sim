@@ -1,0 +1,21 @@
+<ROSETTASCRIPTS>
+    <SCOREFXNS>
+        <ScoreFunction name="beta_sf" weights="beta_nov16_cart"/>
+    </SCOREFXNS>
+    <TASKOPERATIONS>
+        <ReadResfile name="mutation" filename="mutation.resfile"/>
+    </TASKOPERATIONS>
+    <MOVERS>
+        <!-- todo: disable_design should be true? does it matter? -->
+        <FastRelax name="mutate"
+                   scorefxn="beta_sf"
+                   task_operations="mutation"
+                   disable_design="false"
+                   cartesian="true"
+                   repeats="5">
+        </FastRelax>
+    </MOVERS>
+    <PROTOCOLS>
+        <Add mover="mutate"/>
+    </PROTOCOLS>
+</ROSETTASCRIPTS>
