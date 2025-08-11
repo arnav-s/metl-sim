@@ -509,7 +509,7 @@ def main(args):
                 pdb_fn -> variant -> (res1, res2) -> energies
         '''
         combined_per_residue_energies = combine_pairwise_scores(join(log_dir, "staging"))
-        with open(join(log_dir, "pairwise_energies.json"), "w") as outfile:
+        with open(join(log_dir, f"{job_uuid}_pairwise_energies.json"), "w") as outfile:
             json.dump(combined_per_residue_energies, outfile, indent=2)
 
     # compress outputs, delete the output staging directory, etc
