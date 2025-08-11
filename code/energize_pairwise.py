@@ -246,8 +246,7 @@ def parse_score_sc(score_sc_fn: str,
     return parsed_df
 
 
-def parse_pairwise_score(score_sc_fn: str,
-                         sort_col: str = "total_score"):
+def parse_pairwise_score(score_sc_fn: str):
 
     tbl = pd.read_csv(score_sc_fn, delim_whitespace=True, comment='#')
     score_cols = [c for c in tbl.columns if re.match(r'^fa_|^hbond|^rama|^total$', c)]
@@ -325,7 +324,7 @@ def run_single_variant(rosetta_main_dir, pdb_fn, chain, variant, rosetta_hparams
     pairwise_energies = parse_pairwise_score(join(working_dir, "pairwise_scores.tbl"))
 
     json.dump({k:v.tolist() for k,v in pairwise_energies.items()},
-          open(join(working_dir, f"{basename(pdb_fn)}_{variant}_pairwise_energies.json"), "w"), indent=2)
+          open(join(staging_dir, f"pairwise_energies_{basename(pdb_fn)}_{variant}.json"), "w"), indent=2)
 
 
     # if the flag is set, save all files in the working directory for this variant
@@ -354,7 +353,7 @@ def get_log_dir_name(args, job_uuid, start_time, ld_prefix="energize"):
 def combine_outputs(staging_dir):
     """ combine the outputs from individual variants into a single csv """
     # Note that these will probably NOT be in the same order as they were run (can add timestamp to record)
-    output_fns = [join(staging_dir, x) for x in os.listdir(staging_dir) if not x.endswith('.json') ]
+    output_fns = [join(staging_dir, x) for x in os.listdir(staging_dir) if not x.startswith('pairwise_energies_') ]
 
     # read individual dataframes into a list
     dfs = []
@@ -365,6 +364,24 @@ def combine_outputs(staging_dir):
     # combine into a single dataframe
     combined_df = pd.concat(dfs, axis=0, ignore_index=True)
     return combined_df
+
+
+def combine_pairwise_scores(staging_dir: str):
+
+    output_fns = [join(staging_dir, x) for x in os.listdir(staging_dir) if x.startswith('pairwise_energies_') ]
+
+    # read individual dataframes into a list
+    per_variant_energy_terms = {}
+    for fn in output_fns:
+        pdb_fn, variant = fn[fn.find('pairwise_energies_')+(len('pairwise_energies_')+1):].rsplit('_', maxsplit=1)
+        pdb_fn = pdb_fn.rsplit('.', maxsplit=1)[0]
+        variant = variant.rsplit('.', maxsplit=1)[0]
+        if pdb_fn not in per_variant_energy_terms:
+            per_variant_energy_terms[pdb_fn] = {}
+        with open(fn, 'r') as iFile:
+            per_variant_energy_terms[pdb_fn][variant] = json.load(iFile)
+
+    return per_variant_energy_terms
 
 
 def save_csv_from_dict(save_fn, d):
@@ -485,6 +502,15 @@ def main(args):
         cdf.insert(2, "job_uuid", job_uuid)
         # save in the main log directory
         cdf.to_csv(join(log_dir, "energies.csv"), index=False)
+
+        '''
+            Need to save pairwise energies separately. Each variant needs L^2* (# terms) entries
+            Format:
+                pdb_fn -> variant -> (res1, res2) -> energies
+        '''
+        combined_per_residue_energies = combine_pairwise_scores(join(log_dir, "staging"))
+        with open(join(log_dir, "pairwise_energies.json"), "w") as outfile:
+            json.dump(combined_per_residue_energies, outfile, indent=2)
 
     # compress outputs, delete the output staging directory, etc
     shutil.rmtree(join(log_dir, "staging"))
