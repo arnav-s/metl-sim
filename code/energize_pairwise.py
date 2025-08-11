@@ -373,8 +373,8 @@ def combine_pairwise_scores(staging_dir: str):
     # read individual dataframes into a list
     per_variant_energy_terms = {}
     for fn in output_fns:
-        pdb_fn, variant = fn[fn.find('pairwise_energies_')+(len('pairwise_energies_')+1):].rsplit('_', maxsplit=1)
-        pdb_fn = pdb_fn.rsplit('.', maxsplit=1)[0]
+        pdb_fn, variant = fn[(fn.find('pairwise_energies_')+ len('pairwise_energies_')):].rsplit('_', maxsplit=1)
+
         variant = variant.rsplit('.', maxsplit=1)[0]
         if pdb_fn not in per_variant_energy_terms:
             per_variant_energy_terms[pdb_fn] = {}
