@@ -10,6 +10,7 @@ import uuid
 import socket
 import csv
 import platform
+import re,json
 
 import shortuuid
 import numpy as np
@@ -100,6 +101,15 @@ def run_filter_step(rosetta_scripts_bin_fn, database_path, working_dir):
         raise RosettaError("Filter step did not execute successfully. Return code: {}".format(return_code))
 
 
+def run_centroid_step(score_jd2_bin_fn, database_path, working_dir):
+    centroid_cmd = [score_jd2_bin_fn, '-database', database_path, '@flags_centroid']
+    centroid_out_fn = join(working_dir, "centroid.out")
+    with open(centroid_out_fn, "w") as f:
+        return_code = subprocess.call(centroid_cmd, cwd=working_dir, stdout=f, stderr=f)
+    if return_code != 0:
+        raise RosettaError("Centroid step did not execute successfully. Return code: {}".format(return_code))
+
+
 def run_pairwise_step(score_pairwise_bin_fn, database_path, working_dir):
     centroid_cmd = [score_pairwise_bin_fn, '-database', database_path, '@flags_score_pairwise']
     centroid_out_fn = join(working_dir, "pairwise.out")
@@ -115,22 +125,25 @@ def get_rosetta_paths(rosetta_main_dir: str):
     if platform.system() == "Linux":
         relax_bin_fn = "relax.static.linuxgccrelease"
         rosetta_scripts_bin_fn = "rosetta_scripts.static.linuxgccrelease"
+        score_jd2_bin_fn = "score_jd2.static.linuxgccrelease"
         score_pairwise_bin_fn = "residue_energy_breakdown.static.linuxgccrelease"
     elif platform.system() == "Darwin":
         relax_bin_fn = "relax.static.macosclangrelease"
         rosetta_scripts_bin_fn = "rosetta_scripts.static.macosclangrelease"
+        score_jd2_bin_fn = "score_jd2.static.macosclangrelease"
         score_pairwise_bin_fn = "residue_energy_breakdown.static.macosclangrelease"
     else:
         raise ValueError("unsupported platform: {}".format(platform.system()))
 
     relax_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", relax_bin_fn))
     rosetta_scripts_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", rosetta_scripts_bin_fn))
+    score_jd2_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", score_jd2_bin_fn))
     score_pairwise_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", score_pairwise_bin_fn))
 
     # path to the rosetta database
     database_path = abspath(join(rosetta_main_dir, "database"))
 
-    return relax_bin_fn, rosetta_scripts_bin_fn, score_pairwise_bin_fn, database_path
+    return relax_bin_fn, rosetta_scripts_bin_fn, score_jd2_bin_fn, score_pairwise_bin_fn, database_path
 
 
 def run_rosetta_pipeline(rosetta_main_dir: str,
@@ -144,7 +157,7 @@ def run_rosetta_pipeline(rosetta_main_dir: str,
     all_start = time.time()
 
     # get the paths to the rosetta binaries and database
-    relax_bin_fn, rosetta_scripts_bin_fn, score_pairwise_bin_fn, database_path = get_rosetta_paths(rosetta_main_dir)
+    relax_bin_fn, rosetta_scripts_bin_fn,  score_jd2_bin_fn, score_pairwise_bin_fn, database_path = get_rosetta_paths(rosetta_main_dir)
 
     # this branch logic is just handling the special case of the "_wt" variant (no mutations)
     mt_run_time = 0
@@ -171,9 +184,13 @@ def run_rosetta_pipeline(rosetta_main_dir: str,
     # print("Filter step took {:.2f}".format(filt_run_time))
 
     cent_start_time = time.time()
-    run_pairwise_step(score_pairwise_bin_fn, database_path, working_dir)
+    run_centroid_step(score_jd2_bin_fn, database_path, working_dir)
     cent_run_time = time.time() - cent_start_time
     # print("Centroid step took {:.2f}".format(cent_run_time))
+
+    pairwise_start_time = time.time()
+    run_pairwise_step(score_pairwise_bin_fn, database_path, working_dir)
+    pairwise_run_time = time.time() - pairwise_start_time
 
     # keep track of how long it takes to run all steps
     all_run_time = time.time() - all_start
@@ -182,6 +199,7 @@ def run_rosetta_pipeline(rosetta_main_dir: str,
                  "relax": rx_run_time,
                  "filter": filt_run_time,
                  "centroid": cent_run_time,
+                 "pairwise": pairwise_run_time,
                  "all": all_run_time}
 
     return run_times
@@ -193,9 +211,17 @@ def parse_score_sc(score_sc_fn: str,
     """ parse the score.sc file from the energize run, aggregating energies and appending info about variant
         this function has also been co-opted to parse the centroid and filter score files, which should only
         have 1 possible record, so no need to do any agg (and it shouldn't) """
-    score_df = pd.read_csv(score_sc_fn, delim_whitespace=True, skiprows=1, header=0)
+    
+    # TODO: Do this in a cleaner fashion. Pairwise scoring doesn't have SEQUENCE: in the first line.
+    with open(score_sc_fn, 'r') as inFile:
+        first_line = inFile.readline().strip()
+    if first_line == 'SEQUENCE:':
+        score_df = pd.read_csv(score_sc_fn, delim_whitespace=True, skiprows=1, header=0)
+    else:
+        score_df = pd.read_csv(score_sc_fn, delim_whitespace=True, header=0)
 
     # drop the "SCORE:" and "description" columns, these won't be needed for final output
+
     score_df = score_df.drop(["SCORE:", "description"], axis=1)
 
     # special case: only 1 structure was generated, no need to aggregate
@@ -219,6 +245,23 @@ def parse_score_sc(score_sc_fn: str,
 
     return parsed_df
 
+
+def parse_pairwise_score(score_sc_fn: str,
+                         sort_col: str = "total_score"):
+
+    tbl = pd.read_csv(score_sc_fn, delim_whitespace=True, comment='#')
+    score_cols = [c for c in tbl.columns if re.match(r'^fa_|^hbond|^rama|^total$', c)]
+    L = tbl[['resi1','resi2']].replace({'--':0}).astype(int).values.max()
+
+    mat = {t:np.zeros((L,L)) for t in score_cols}
+    for _,row in tbl.iterrows():
+        i = int(row.resi1) - 1
+        j = int(row.resi2) - 1 if row.resi2 != '--' else i  # self row
+        for term in score_cols:
+            mat[term][i,j] = row[term]
+            mat[term][j,i] = row[term]
+    
+    return mat
 
 def run_single_variant(rosetta_main_dir, pdb_fn, chain, variant, rosetta_hparams,
                        staging_dir, output_dir, save_wd=False):
@@ -254,14 +297,14 @@ def run_single_variant(rosetta_main_dir, pdb_fn, chain, variant, rosetta_hparams
     # place in a staging directory and combine with other variants that run during this job
     score_df = parse_score_sc(join(working_dir, "relax.sc"))
     filter_df = parse_score_sc(join(working_dir, "filter.sc"))
-    pairwise_df = parse_score_sc(join(working_dir, "pairwise.sc"))
+    centroid_df = parse_score_sc(join(working_dir, "centroid.sc"))
 
     # the total_score from filter and centroid probably won't be used, but let's keep them in just in case
     # just need to resolve the name conflict with the total_score from score_df
     filter_df.rename(columns={"total_score": "filter_total_score"}, inplace=True)
-    pairwise_df.rename(columns={"total_score": "centroid_total_score"}, inplace=True)
+    centroid_df.rename(columns={"total_score": "centroid_total_score"}, inplace=True)
 
-    full_df = pd.concat((score_df, filter_df, pairwise_df), axis=1)
+    full_df = pd.concat((score_df, filter_df, centroid_df), axis=1)
 
     # append info about this variant
     full_df.insert(0, "pdb_fn", [basename(pdb_fn)])
@@ -272,10 +315,18 @@ def run_single_variant(rosetta_main_dir, pdb_fn, chain, variant, rosetta_hparams
     full_df.insert(5, "relax_run_time", [int(run_times["relax"])])
     full_df.insert(6, "filter_run_time", [int(run_times["filter"])])
     full_df.insert(7, "centroid_run_time", [int(run_times["centroid"])])
+    full_df.insert(7, "pairwise_run_time", [int(run_times["pairwise"])])
 
     # note: it's not the best practice to have filenames with periods and commas
     #   could pass in the loop ID for this single variant and use that to save the file
     full_df.to_csv(join(staging_dir, "{}_{}_energies.csv".format(basename(pdb_fn), variant)), index=False)
+
+    # Read and dump pairwise energies in working dir
+    pairwise_energies = parse_pairwise_score(join(working_dir, "pairwise_scores.tbl"))
+
+    json.dump({k:v.tolist() for k,v in pairwise_energies.items()},
+          open(join(working_dir, f"{basename(pdb_fn)}_{variant}_pairwise_energies.json"), "w"), indent=2)
+
 
     # if the flag is set, save all files in the working directory for this variant
     # these go directly to the output directory instead of the staging directory
@@ -303,7 +354,7 @@ def get_log_dir_name(args, job_uuid, start_time, ld_prefix="energize"):
 def combine_outputs(staging_dir):
     """ combine the outputs from individual variants into a single csv """
     # Note that these will probably NOT be in the same order as they were run (can add timestamp to record)
-    output_fns = [join(staging_dir, x) for x in os.listdir(staging_dir)]
+    output_fns = [join(staging_dir, x) for x in os.listdir(staging_dir) if not x.endswith('.json') ]
 
     # read individual dataframes into a list
     dfs = []
