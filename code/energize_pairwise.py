@@ -14,7 +14,9 @@ import re,json
 
 import shortuuid
 import numpy as np
+from scipy.sparse import csr_matrix
 import pandas as pd
+import h5py
 
 from templates import fill_templates
 import time
@@ -145,6 +147,27 @@ def get_rosetta_paths(rosetta_main_dir: str):
 
     return relax_bin_fn, rosetta_scripts_bin_fn, score_jd2_bin_fn, score_pairwise_bin_fn, database_path
 
+def write_hdf_data(outFile, data_dict):
+    for k,v in data_dict.items():
+        group = outFile.create_group(k)
+        group.create_dataset("data", data=v.data, compression="gzip")
+        group.create_dataset("indices", data=v.indices, compression="gzip")
+        group.create_dataset("indptr", data=v.indptr, compression="gzip")
+        group.attrs["shape"] = v.shape
+
+def write_pairwise_energies(database_file: str, pdb_fn: str, variant: str, pairwise_scores: dict):
+    with h5py.File(database_file, "a") as outFile:
+        if pdb_fn not in outFile:
+            grp = outFile.create_group(pdb_fn)
+        else:
+            grp = outFile[pdb_fn]
+        if variant not in grp:
+            grp = grp.create_group(variant)
+        else:
+            grp = grp[variant]
+        write_hdf_data(grp, pairwise_scores)
+        
+
 
 def run_rosetta_pipeline(rosetta_main_dir: str,
                          working_dir: str,
@@ -260,7 +283,7 @@ def parse_pairwise_score(score_sc_fn: str):
             mat[term][i,j] = row[term]
             mat[term][j,i] = row[term]
     
-    return mat
+    return {k: csr_matrix(v) for k, v in mat.items()}
 
 def run_single_variant(rosetta_main_dir, pdb_fn, chain, variant, rosetta_hparams,
                        staging_dir, output_dir, save_wd=False):
@@ -323,9 +346,7 @@ def run_single_variant(rosetta_main_dir, pdb_fn, chain, variant, rosetta_hparams
     # Read and dump pairwise energies in working dir
     pairwise_energies = parse_pairwise_score(join(working_dir, "pairwise_scores.tbl"))
 
-    json.dump({k:v.tolist() for k,v in pairwise_energies.items()},
-          open(join(staging_dir, f"pairwise_energies_{basename(pdb_fn)}_{variant}.json"), "w"), indent=2)
-
+    write_pairwise_energies(join(output_dir, "pairwise_energies.h5"), basename(pdb_fn), variant, pairwise_energies)
 
     # if the flag is set, save all files in the working directory for this variant
     # these go directly to the output directory instead of the staging directory
@@ -364,24 +385,6 @@ def combine_outputs(staging_dir):
     # combine into a single dataframe
     combined_df = pd.concat(dfs, axis=0, ignore_index=True)
     return combined_df
-
-
-def combine_pairwise_scores(staging_dir: str):
-
-    output_fns = [join(staging_dir, x) for x in os.listdir(staging_dir) if x.startswith('pairwise_energies_') ]
-
-    # read individual dataframes into a list
-    per_variant_energy_terms = {}
-    for fn in output_fns:
-        pdb_fn, variant = fn[(fn.find('pairwise_energies_')+ len('pairwise_energies_')):].rsplit('_', maxsplit=1)
-
-        variant = variant.rsplit('.', maxsplit=1)[0]
-        if pdb_fn not in per_variant_energy_terms:
-            per_variant_energy_terms[pdb_fn] = {}
-        with open(fn, 'r') as iFile:
-            per_variant_energy_terms[pdb_fn][variant] = json.load(iFile)
-
-    return per_variant_energy_terms
 
 
 def save_csv_from_dict(save_fn, d):
@@ -446,6 +449,11 @@ def main(args):
     staging_dir = join(log_dir, "staging")
     os.makedirs(staging_dir, exist_ok=True)
 
+    # Setup h5 file for writing pairwise scores
+    h5_file_path = join(log_dir, f"pairwise_energies.h5")
+    with open(h5_file_path, "a") as oFile:
+        os.utime(h5_file_path, None)
+
     # loop through each variant, model it with rosetta, save results
     # individual variant outputs will be placed in the staging directory
     failed = []  # keep track of any variants that file after 3 attempts
@@ -502,15 +510,6 @@ def main(args):
         cdf.insert(2, "job_uuid", job_uuid)
         # save in the main log directory
         cdf.to_csv(join(log_dir, "energies.csv"), index=False)
-
-        '''
-            Need to save pairwise energies separately. Each variant needs L^2* (# terms) entries
-            Format:
-                pdb_fn -> variant -> (res1, res2) -> energies
-        '''
-        combined_per_residue_energies = combine_pairwise_scores(join(log_dir, "staging"))
-        with open(join(log_dir, f"{job_uuid}_pairwise_energies.json"), "w") as outfile:
-            json.dump(combined_per_residue_energies, outfile, indent=2)
 
     # compress outputs, delete the output staging directory, etc
     shutil.rmtree(join(log_dir, "staging"))
