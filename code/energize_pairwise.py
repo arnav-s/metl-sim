@@ -147,12 +147,29 @@ def get_rosetta_paths(rosetta_main_dir: str):
 
     return relax_bin_fn, rosetta_scripts_bin_fn, score_jd2_bin_fn, score_pairwise_bin_fn, database_path
 
+def quantize_float_data(float_data, quantized_dtype=np.int8):
+    x_min = float_data.min()
+    x_max = float_data.max()
+    quantized_min = np.iinfo(quantized_dtype).min
+    quantized_max = np.iinfo(quantized_dtype).max
+
+    s = (x_max - x_min)/(quantized_max - quantized_min)
+    z = quantized_min - (x_min/s)
+
+    quantized_data = np.clip(np.round(float_data/s)+ z, quantized_min, quantized_max).astype(quantized_dtype)
+    return quantized_data, s, z
+
+
 def write_hdf_data(outFile, data_dict):
     for k,v in data_dict.items():
         group = outFile.create_group(k)
-        group.create_dataset("data", data=v.data, compression="gzip")
-        group.create_dataset("indices", data=v.indices, compression="gzip")
-        group.create_dataset("indptr", data=v.indptr, compression="gzip")
+        quant_data, s, z = quantize_float_data(v.data)
+        quant_grp = group.create_group("data")
+        quant_grp.create_dataset("quantized_data", data=quant_data, dtype='i1')
+        quant_grp.attrs['s'] = s
+        quant_grp.attrs['z'] = z
+        group.create_dataset("indices", data=v.indices)
+        group.create_dataset("indptr", data=v.indptr)
         group.attrs["shape"] = v.shape
 
 def write_pairwise_energies(database_file: str, pdb_fn: str, variant: str, pairwise_scores: dict):
@@ -184,7 +201,7 @@ def run_rosetta_pipeline(rosetta_main_dir: str,
 
     # this branch logic is just handling the special case of the "_wt" variant (no mutations)
     mt_run_time = 0
-    if variant_has_mutations:
+    '''if variant_has_mutations:
         mt_start_time = time.time()
         run_mutate_step(relax_bin_fn, database_path, mutate_default_max_cycles, working_dir)
         mt_run_time = time.time() - mt_start_time
@@ -193,6 +210,7 @@ def run_rosetta_pipeline(rosetta_main_dir: str,
         # variant has no mutations (wild-type), so just rename structure.pdb to structure_0001.pdb
         # which is the expected structure filename for the remaining pipelie steps
         os.rename(join(working_dir, "structure.pdb"), join(working_dir, "structure_0001.pdb"))
+    '''
 
     # relax also needs to know whether the variant has mutations because it needs to either run relax
     # around just the mutated residues or around the whole structure
@@ -275,7 +293,7 @@ def parse_pairwise_score(score_sc_fn: str):
     score_cols = [c for c in tbl.columns if re.match(r'^fa_|^hbond|^rama|^total$', c)]
     L = tbl[['resi1','resi2']].replace({'--':0}).astype(int).values.max()
 
-    mat = {t:np.zeros((L,L)) for t in score_cols}
+    mat = {t:np.zeros((L,L), dtype=np.float16) for t in score_cols}
     for _,row in tbl.iterrows():
         i = int(row.resi1) - 1
         j = int(row.resi2) - 1 if row.resi2 != '--' else i  # self row
@@ -510,6 +528,10 @@ def main(args):
         cdf.insert(2, "job_uuid", job_uuid)
         # save in the main log directory
         cdf.to_csv(join(log_dir, "energies.csv"), index=False)
+
+        os.system(f"tar cvjf \
+                  {join(log_dir, 'pairwise_energies.h5')}.tar.bz2 \
+                  {join(log_dir, 'pairwise_energies.h5')}")
 
     # compress outputs, delete the output staging directory, etc
     shutil.rmtree(join(log_dir, "staging"))
