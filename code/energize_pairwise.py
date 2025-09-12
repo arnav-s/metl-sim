@@ -122,7 +122,7 @@ def run_pairwise_step(score_pairwise_bin_fn, database_path, working_dir):
 
 
 def get_rosetta_paths(rosetta_main_dir: str):
-    # path to rosetta binaries which are used for the various steps
+    '''# path to rosetta binaries which are used for the various steps
     # subprocess wants a full path... or "./", so let's just add abspath
     if platform.system() == "Linux":
         relax_bin_fn = "relax.static.linuxgccrelease"
@@ -143,7 +143,15 @@ def get_rosetta_paths(rosetta_main_dir: str):
     score_pairwise_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", score_pairwise_bin_fn))
 
     # path to the rosetta database
-    database_path = abspath(join(rosetta_main_dir, "database"))
+    database_path = abspath(join(rosetta_main_dir, "database"))'''
+
+    # These binaries are packaged in the Docker container
+    relax_bin_fn = 'relax'
+    rosetta_scripts_bin_fn = 'rosetta_scripts'
+    score_jd2_bin_fn = "score_jd2"
+    score_pairwise_bin_fn = "residue_energy_breakdown"
+    database_path = '/usr/local/database'
+
 
     return relax_bin_fn, rosetta_scripts_bin_fn, score_jd2_bin_fn, score_pairwise_bin_fn, database_path
 
@@ -201,7 +209,10 @@ def run_rosetta_pipeline(rosetta_main_dir: str,
 
     # this branch logic is just handling the special case of the "_wt" variant (no mutations)
     mt_run_time = 0
-    '''if variant_has_mutations:
+    '''
+    TODO: Confirm if this step is redundant. Sri's protocol does mutate + relax in the same step.
+
+    if variant_has_mutations:
         mt_start_time = time.time()
         run_mutate_step(relax_bin_fn, database_path, mutate_default_max_cycles, working_dir)
         mt_run_time = time.time() - mt_start_time
@@ -225,7 +236,7 @@ def run_rosetta_pipeline(rosetta_main_dir: str,
     # print("Filter step took {:.2f}".format(filt_run_time))
 
     cent_start_time = time.time()
-    run_centroid_step(score_jd2_bin_fn, database_path, working_dir)
+    #run_centroid_step(score_jd2_bin_fn, database_path, working_dir)
     cent_run_time = time.time() - cent_start_time
     # print("Centroid step took {:.2f}".format(cent_run_time))
 
@@ -337,14 +348,14 @@ def run_single_variant(rosetta_main_dir, pdb_fn, chain, variant, rosetta_hparams
     # place in a staging directory and combine with other variants that run during this job
     score_df = parse_score_sc(join(working_dir, "relax.sc"))
     filter_df = parse_score_sc(join(working_dir, "filter.sc"))
-    centroid_df = parse_score_sc(join(working_dir, "centroid.sc"))
+    #centroid_df = parse_score_sc(join(working_dir, "centroid.sc"))
 
     # the total_score from filter and centroid probably won't be used, but let's keep them in just in case
     # just need to resolve the name conflict with the total_score from score_df
     filter_df.rename(columns={"total_score": "filter_total_score"}, inplace=True)
-    centroid_df.rename(columns={"total_score": "centroid_total_score"}, inplace=True)
+    #centroid_df.rename(columns={"total_score": "centroid_total_score"}, inplace=True)
 
-    full_df = pd.concat((score_df, filter_df, centroid_df), axis=1)
+    full_df = pd.concat((score_df, filter_df), axis=1)
 
     # append info about this variant
     full_df.insert(0, "pdb_fn", [basename(pdb_fn)])

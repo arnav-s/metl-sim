@@ -15,7 +15,7 @@
                task_operations="mutation_task"
                disable_design="false"
                cartesian="true"
-               repeats="1" />
+               repeats="{relax_repeats}" />
   </MOVERS>
 
   <PROTOCOLS>

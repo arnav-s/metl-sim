@@ -108,22 +108,14 @@ def run_clean_pdb_keep_ligand(rosetta_main_dir, working_dir, conda_pack_env=None
     return cleaned_pdb_fn
 
 
-def run_relax(rosetta_main_dir, working_dir, cleaned_pdb_fn, nstruct=1):
+def run_relax(rosetta_main_dir, working_dir, cleaned_pdb_fn,  num_procs, nstruct=1):
     """ run relax to prep the cleaned pdb for further use with Rosetta (as recommended by Rosetta docs) """
 
-    if platform.system() == "Linux":
-        relax_bin_fn = "relax.static.linuxgccrelease"
-    elif platform.system() == "Darwin":
-        relax_bin_fn = "relax.static.macosclangrelease"
-    else:
-        raise ValueError("unsupported platform: {}".format(platform.system()))
-
-    relax_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", relax_bin_fn))
-
     # path to the rosetta database
-    database_path = abspath(join(rosetta_main_dir, "database"))
+    database_path = "/usr/local/database"
 
-    relax_cmd = [relax_bin_fn, '-database', database_path, '-s', cleaned_pdb_fn,
+    relax_cmd = ['mpirun', '-np', str(num_procs), 
+                 'relax', '-database', database_path, '-s', cleaned_pdb_fn,
                  '-nstruct', str(nstruct), '@flags_prepare_relax']
     relax_out_fn = join(working_dir, "relax.out")
     with open(relax_out_fn, "w") as f:
@@ -176,7 +168,7 @@ def main(args):
 
     # relax with all-heavy-atom constraints
     if args.relax_nstruct > 0:
-        run_relax(args.rosetta_main_dir, working_dir, cleaned_pdb_fn, nstruct=args.relax_nstruct)
+        run_relax(args.rosetta_main_dir, working_dir, cleaned_pdb_fn, num_procs=args.n_procs, nstruct=args.relax_nstruct)
 
         # get the filename of the lowest scoring structure
         lowest_energy_pdb_fn = parse_scores(working_dir)
@@ -214,6 +206,10 @@ if __name__ == "__main__":
                         help="number of structures (restarts) in the relax step",
                         type=int,
                         default=10)
+    parser.add_argument("--n_procs",
+                        help="number of processors to parallelize relax across",
+                        type=int,
+                        default=1)
 
     parser.add_argument("--out_dir_base",
                         help="base output directory",
