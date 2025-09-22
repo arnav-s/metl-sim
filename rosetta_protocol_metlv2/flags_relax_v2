@@ -1,0 +1,5 @@
+-s structure.pdb
+-parser:protocol relax.xml
+-ignore_unrecognized_res
+-beta_nov16_cart
+-out:file:scorefile relax.sc

@@ -1,0 +1,42 @@
+<ROSETTASCRIPTS>
+  <SCOREFXNS>
+    <ScoreFunction name="beta_sf" weights="beta_nov16_cart"/>
+  </SCOREFXNS>
+
+
+  <RESIDUE_SELECTORS>
+    <Neighborhood name="surrounding" resnums="55" distance="10"/>
+    <Not name="rest" selector="surrounding"/>
+  </RESIDUE_SELECTORS>
+
+
+  <TASKOPERATIONS>
+    <OperateOnResidueSubset name="repack_res" selector="surrounding">
+      <RestrictToRepackingRLT/>
+    </OperateOnResidueSubset>
+    <OperateOnResidueSubset name="no_repack" selector="rest">
+      <PreventRepackingRLT/>
+    </OperateOnResidueSubset>
+  </TASKOPERATIONS>
+
+
+  <MOVERS>
+    <!-- take residue 55 in chain A and mutate it to an Alanine (A)-->
+
+    <MutateResidue name="mutant" target="55A" new_res="ALA"/>
+    <FastRelax name="relax"
+               scorefxn="beta_sf"
+               task_operations="repack_res,no_repack"
+               disable_design="false"
+               cartesian="true"
+               repeats="10"/>
+  </MOVERS>
+
+  <PROTOCOLS>
+    <!-- make sure to add a new mover for each new mutant-->
+    <Add mover_name="mutant"/>
+    <Add mover="relax"/>
+  </PROTOCOLS>
+
+  <OUTPUT scorefxn="beta_sf"/>
+</ROSETTASCRIPTS>

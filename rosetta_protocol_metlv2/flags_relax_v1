@@ -1,0 +1,5 @@
+-s structure.pdb
+-parser:protocol relax_v1.xml
+-ignore_unrecognized_res
+-out:prefix flags_relax_v1_
+-out:file:scorefile flags_relax_v1.sc
