@@ -1,7 +1,7 @@
 
-## Rosetta Protocol Exploration 
+# Rosetta Protocol Exploration 
 
-### Docker Image
+## Docker Image
 1. Dowload docker image (4 GB total)
 ```angular2html
 docker pull rosettacommons/rosetta:latest
@@ -14,41 +14,47 @@ docker run -it -v /path/to/metl-sim/rosetta_protocol:/rosetta rosettacommons/ros
 
 4. Open `rosetta_protocol` in the docker container. 
 
-### Protocols 
+## Protocols 
 
 To explore behavior of different protocols I will use the pab1 structure (`structure.pdb`). I will then introduce a mutation (`L55A` - 1 indexing in chain A) and run the FastRelax Protocol.
 
 Below are all the flags for each experiment I ran. The first are changes to Sri's current protocol, followed by experiments on behaviors of interest. 
 
 - Changes to current All Atom Relax Protocol
-  - `flags_relax_v1` - Starting FastRelax Protocol (Cartesian Minimization)
-  - `flags_relax_v2` - Add flag to stop ignorning weight from xml script, from `ref2015` weights to `beta_nov16_cart`. 
+  - `flags_relax_v1` - Starting FastRelax Protocol (Cartesian Minimization) 
   - `flags_relax_v3` - Switch mutation scheme so all residues are repacked, not only the residue that was mutated. 
+Add flag to stop ignorning weight from xml script, from `ref2015` weights to `beta_nov16_cart`. 
 - Side Experiments on Parameter behavior
-  - `flags_default_max_cycles` -  Confirm behavior controls in some factor the number of minimization steps. 
+  - `flags_default_max_cycles` -  Confirm behavior controls in some behavior related to the number of minimization steps. 
   - `flags_loops_minimize_max_iter` - Confirm this parameter does nothing.
-  - `flags_restrict_repack` - 
-  - `flags_restrict_backbone` -
+  - `flags_restrict_repack` - Restrict repacked residues to those within a 10 Å distance.
+  - `flags_restrict_backbone` - 
 
-Here are the outputs for each:
+
+### Recommendations
+
+1) Change current all atom relax script in `metl-sim`
+2) Do sweep over `default_max_cycles`, `repeat`, `restrict_repack_distance`, and `restrict_backbone_distance`.
+
+
+### Outputs for each run
 - console output: `<flag>.log` 
 - pdb output: `<flag>_structure_0001.pdb`
 - score file output: `<flag>.sc`
 
 
 
-#### Changes to the All Atom Relax Protocol
+
+### Changes to the All Atom Relax Protocol
 
 
->Note: All protocols in these tests do 10 relax repeats.
-> Which is repeating optimization of sidechains (repacking) and backbone 
-> (minimization) 10 times. I did this to make sure that we 
-> would see movement of sidechains and backbone. 
-> However, the current number of repeats is 1 in the Cartesian script. 
+> Note: All protocols in these tests do 10 relax repeats. 
+> Within each repeat minimization and repack is done 4 times (as shown in output log).
+> So for 10 repeats, minimization and repack is done 40 times. 
+> I did this to make sure that we would see movement of sidechains and backbone.
+> However, the current number of repeats is 1. 
 > We likely should test this in the same against 
 > the default (recommended) 5 and see how much information is lost.
-> Within each repeat minimization and repack is done 4 times as shown 
-> in 
 
 
 
@@ -65,8 +71,11 @@ user    1m46.142s
 sys     0m0.048s
 ```
 
-Things to note: 
-- 1) The protocol looks to be using the `ref2015` loss function. Since no `-beta_nov16_cart` flag in command line.
+Things to note:
+
+2) The protocol looks to be using the `ref2015` loss function. 
+Since no `-beta_nov16_cart` flag in command line. Below is a snippet of the relevant parts 
+of the log file. 
 
 ```angular2html
 core.scoring.ScoreFunctionFactory: [ WARNING ] **************************************************************************
@@ -81,8 +90,8 @@ beta_nov16_cart may be a 'beta' scorefunction, but ScoreFunctionFactory thinks t
 core.scoring.ScoreFunctionFactory: SCOREFUNCTION: ref2015
 ```
 
-
-- 2) The repack only selects the mutated residue as `55 A PIKAA A` in resfile only allows redesign at position 55. 
+2) The repack only selects the mutated residue. The command `55 A PIKAA A`
+in `mutation.resfile` only allows design at position 55, which restricts the allowed repacking. 
 
 ```angular2html
 core.pack.interaction_graph.interaction_graph_factory: Instantiating PDInteractionGraph
@@ -141,10 +150,29 @@ ATOM    825 3HB  ALA A  55     -21.934  23.580  -0.027  1.00  0.00           H
 
 ```
 
-This looks to be correct now!
+
+The three structures below are compared, and it is clear the two protocols produce different outputs. 
+Although the protocol is stochastic, large deviations like this were not observed if the same protocol 
+was run twice. 
 
 
-#### Parameter `-default_max_cycles`
+![structure_vs_flags_relax_v1_vs_flags_relax_v3](images/structure_vs_flags_relax_v1_vs_flags_relax_v3.png)
+Shown above (green-original pab1-`structure.pdb`, original all atom relax- `flags_relax_v1_structure_0001.pdb` - blue,
+fixed all atom relax - `flags_relax_v3_structure_0001.pdb` - hot pink)
+
+
+
+
+
+### Parameter `-default_max_cycles`
+
+This parameter, can be set by the user and is used in FastRelax. It controls the minimization steps. (not repack steps)
+
+Confirmation of correctness from rosetta slack:
+> Frank DiMaio Apr 22nd, 2021 at 11:54 AM
+:this (at least on quick glance) looks good to me ... the only thing we do "differently" in relax is limit the max # of minimization cycles to 200.  This is controlled with a flag (-default_max_cycles) or through a relax "script file"  (https://new.rosettacommons.org/docs/latest/application_documentation/structure_prediction/relax#description-of-algorithm)
+
+
 ```angular2html
 time rosetta_scripts @flags_relax_default_max_cycles > flags_relax_default_max_cycles.log 2>&1
 
@@ -170,22 +198,37 @@ protocols.relax.FastRelax: CMD: min  -233.736  0.0159546  0.0159546  0.34815
 You can also confirm by looking in pymol at the comparison between the two structures 
 and seeing no obvious minimization. Especially if set to 0.
 
-This parameter, can be set by the user and is used in FastRelax. It controls the minimization steps. (not repack steps)
 
-Confirmation of correctness from rosetta slack:
-> Frank DiMaio Apr 22nd, 2021 at 11:54 AM
-:this (at least on quick glance) looks good to me ... the only thing we do "differently" in relax is limit the max # of minimization cycles to 200.  This is controlled with a flag (-default_max_cycles) or through a relax "script file"  (https://new.rosettacommons.org/docs/latest/application_documentation/structure_prediction/relax#description-of-algorithm)
+![default_max_cycles](images/structure_vs_flags_default_max_cycles.png)
+Shown above (green-original pab1-`structure.pdb`,default_max_cycles set to 1 - `flags_relax_default_max_cycles_structure_0001.pdb` - yellow)
 
-#### Parameter `-loops:minimize_max_iter`
+
+
+
+### Parameter `-loops:minimize_max_iter`
 ```angular2html
 time rosetta_scripts @flags_relax_minimize_max_iter > flags_relax_minimize_max_iter.log 2>&1
+# xml: relax_v3.xml
+# total_score: -237.808 
+# timing:
+
+real    1m36.783s
+user    1m35.816s
+sys     0m0.943s
 ```
 
-Although read in by Rosetta arg parser, this parameter is not exposed to the Rosetta FastRelax protocol. For example, the C alpha carbons clearly moved despite setting this parameter to 0 which shouldn’t be possible in the only repack setting.
+Although read in by Rosetta arg parser, this parameter is not exposed to the Rosetta FastRelax protocol. 
+For example, the C alpha carbons clearly moved despite setting 
+this parameter to 0 which shouldn’t be possible in the only
+repack setting.
+
+![minimize_max_iter](images/structure_vs_flags_relax_v3_vs_flags_relax_minimize_max_iter.png)
+Shown above (green-original pab1-`structure.pdb`, fixed all atom relax - `flags_relax_v3_structure_0001.pdb` - hot pink, 
+minimize_max_iter set to zero - `flags_relax_minimize_max_iter_structure_0001.pdb` - tan)
 
 
 
-##### Restrict Repack 
+### Parameter Restrict Repack 
 
 First need to verify that the `ResidueSelector` we are using 
 ```angular2html
@@ -239,7 +282,17 @@ protocols.relax.FastRelax: CMD: min  -317.338  0.688015  0.688015  0.0506
 protocols.relax.FastRelax: CMD: coord_cst_weight  -317.338  0.688015  0.688015  0.0506
 ```
 
-#### Parameter - Restrict Minimizer Distance
+It's hard to confirm this one visually since the repacking also effects the minimization.
+So residues that are more than 10 Å away also change, for example the disorder region in the upper left.
+
+
+![flags_relax_v3_vs_flags_restrict_repack](images/flags_relax_v3_vs_flags_restrict_repack.png)
+Shown above (fixed all atom relax - `flags_relax_v3_structure_0001.pdb` - hot pink, 
+restricted repack set to 10 Å from mutated residue - `flags_restrict_repack_structure_0001.pdb` - silver)
+
+
+
+### Parameter - Restrict Minimizer Distance
 
 Restricting the distance of the minimizer. 
 
