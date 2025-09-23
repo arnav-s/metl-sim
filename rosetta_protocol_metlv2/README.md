@@ -1,5 +1,5 @@
 
-# Rosetta Protocol Exploration 
+#Rosetta Protocol Exploration 
 
 ## Docker Image
 1. Dowload docker image (4 GB total)
@@ -31,13 +31,13 @@ Add flag to stop ignorning weight from xml script, from `ref2015` weights to `be
   - `flags_restrict_backbone` - 
 
 
-### Recommendations
+## Recommendations
 
 1) Change current all atom relax script in `metl-sim`
 2) Do sweep over `default_max_cycles`, `repeat`, `restrict_repack_distance`, and `restrict_backbone_distance`.
 
 
-### Outputs for each run
+## Outputs for each run
 - console output: `<flag>.log` 
 - pdb output: `<flag>_structure_0001.pdb`
 - score file output: `<flag>.sc`
@@ -45,7 +45,7 @@ Add flag to stop ignorning weight from xml script, from `ref2015` weights to `be
 
 
 
-### Changes to the All Atom Relax Protocol
+## Changes to the All Atom Relax Protocol
 
 
 > Note: All protocols in these tests do 10 relax repeats. 
@@ -164,7 +164,7 @@ fixed all atom relax - `flags_relax_v3_structure_0001.pdb` - hot pink)
 
 
 
-### Parameter `-default_max_cycles`
+## Parameter `-default_max_cycles`
 
 This parameter, can be set by the user and is used in FastRelax. It controls the minimization steps. (not repack steps)
 
@@ -205,7 +205,7 @@ Shown above (green-original pab1-`structure.pdb`,default_max_cycles set to 1 - `
 
 
 
-### Parameter `-loops:minimize_max_iter`
+## Parameter `-loops:minimize_max_iter`
 ```angular2html
 time rosetta_scripts @flags_relax_minimize_max_iter > flags_relax_minimize_max_iter.log 2>&1
 # xml: relax_v3.xml
@@ -228,7 +228,7 @@ minimize_max_iter set to zero - `flags_relax_minimize_max_iter_structure_0001.pd
 
 
 
-### Parameter Restrict Repack 
+## Parameter Restrict Repack 
 
 First need to verify that the `ResidueSelector` we are using 
 ```angular2html
@@ -292,9 +292,9 @@ restricted repack set to 10 Å from mutated residue - `flags_restrict_repack_str
 
 
 
-### Parameter - Restrict Minimizer Distance
+## Parameter - Restrict Minimizer Distance
 
 Restricting the distance of the minimizer. 
 
 
-#### Constraints Investigation
+## Constraints Investigation
