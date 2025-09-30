@@ -3,6 +3,22 @@
     <ScoreFunction name="beta_sf" weights="beta_nov16_cart"/>
   </SCOREFXNS>
 
+  <RESIDUE_SELECTORS>
+    <Neighborhood name="surrounding" resnums="55" distance="100"/>
+    <Not name="rest" selector="surrounding"/>
+  </RESIDUE_SELECTORS>
+
+
+  <MOVE_MAP_FACTORIES>
+    <!-- allow backbone and sidechain minimization only for residues in "surrounding" -->
+    <MoveMapFactory name="local_mm" bb="0" chi="0">
+      <Backbone residue_selector="surrounding" enable="true"/>
+      <Chi residue_selector="surrounding" enable="true"/>
+    </MoveMapFactory>
+  </MOVE_MAP_FACTORIES>
+
+
+
   <MOVERS>
     <!-- take residue 55 in chain A and mutate it to an Alanine (A)-->
 
@@ -11,7 +27,8 @@
                scorefxn="beta_sf"
                disable_design="false"
                cartesian="true"
-               repeats="10"/>
+               repeats="10"
+               movemap_factory="local_mm"/>
   </MOVERS>
 
   <PROTOCOLS>

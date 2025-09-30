@@ -3,4 +3,5 @@
 -ignore_unrecognized_res
 -beta_nov16_cart
 -out:prefix flags_relax_v3_
--out:file:scorefile relax.sc
+-out:file:scorefile flags_relax_v3.sc
+-nstruct 10

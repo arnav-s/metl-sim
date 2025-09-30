@@ -4,9 +4,7 @@
   </SCOREFXNS>
 
   <MOVERS>
-    <!-- take residue 55 in chain A and mutate it to an Alanine (A)-->
 
-    <MutateResidue name="mutant" target="55A" new_res="ALA"/>
     <FastRelax name="relax"
                scorefxn="beta_sf"
                disable_design="false"
@@ -15,8 +13,7 @@
   </MOVERS>
 
   <PROTOCOLS>
-    <!-- make sure to add a new mover for each new mutant-->
-    <Add mover_name="mutant"/>
+
     <Add mover_name="relax"/>
   </PROTOCOLS>
 

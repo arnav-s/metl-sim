@@ -1129,7 +1129,7 @@ ATOM   1119 1HD  PRO A  75     -12.722  21.386   5.057  1.00  0.00           H
 ATOM   1120 2HD  PRO A  75     -14.313  20.915   4.310  1.00  0.00           H  
 TER                                                                             
 # All scores below are weighted scores, not raw scores.
-#BEGIN_POSE_ENERGIES_TABLE flags_relax_minimize_max_iter_structure_0001.pdb
+#BEGIN_POSE_ENERGIES_TABLE flags_relax_v3_structure_0005.pdb
 label fa_atr fa_rep fa_sol fa_intra_atr_xover4 fa_intra_rep_xover4 fa_intra_sol_xover4 lk_ball lk_ball_iso lk_ball_bridge lk_ball_bridge_uncpl fa_elec fa_intra_elec hbond_sr_bb hbond_lr_bb hbond_bb_sc hbond_sc dslf_fa13 omega fa_dun_dev fa_dun_rot fa_dun_semi p_aa_pp hxl_tors ref rama_prepro cart_bonded total
 weights 1 0.55 1 1 0.55 1 0.92 -0.38 -0.33 -0.33 1 1 1 1 1 1 1.25 0.48 0.69 0.76 0.78 0.61 1 1 0.5 0.5 NA
 pose -395.735 40.5335 246.609 -22.8267 8.06425 14.9756 142.791 -154.095 -0.76916 -5.0373 -131.442 -22.9208 -28.52 -28.7563 -12.1425 -2.80641 0 -1.54678 4.54469 28.7786 67.8648 -21.1408 7.30615 -3.2994 -3.95364 35.7155 -237.808
@@ -1208,5 +1208,5 @@ TYR_72 -6.19029 0.49941 3.83743 -0.85422 0.05752 0.14364 2.19224 -2.37721 -0.014
 VAL_73 -7.87682 0.83124 0.50764 -0.30994 0.25874 0.06759 1.15267 -1.90059 -0.01087 -0.0751 -0.30625 -0.59023 0 0 0 0 0 -0.01669 0.07419 0.56242 0 -0.41381 0 2.085 -0.34592 0.36793 -5.93879
 ALA_74 -3.75323 0.64471 2.4099 -0.02114 0 0 1.75234 -1.60678 -0.01621 -0.14344 -1.90817 -0.37383 0 0 0 0 0 0.0772 0 0 0 -0.50877 0 2.3386 1.12905 0.90261 0.92285
 PRO:CtermProteinFull_75 -1.67005 0.41531 0.48973 -0.24375 0.14555 0.24543 0.04481 -0.2722 -0.00734 -0.07629 -0.19864 -1.16411 0 0 0 0 0 0 0.06913 0.17892 0 0 0 -5.1227 1.3093 1.21781 -4.6391
-#END_POSE_ENERGIES_TABLE flags_relax_minimize_max_iter_structure_0001.pdb
+#END_POSE_ENERGIES_TABLE flags_relax_v3_structure_0005.pdb
 
