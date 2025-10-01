@@ -114,8 +114,8 @@ def run_relax(rosetta_main_dir, working_dir, cleaned_pdb_fn,  num_procs, nstruct
     # path to the rosetta database
     database_path = "/usr/local/database"
 
-    relax_cmd = ['mpirun', '-np', str(num_procs), 
-                 'relax', '-database', database_path, '-s', cleaned_pdb_fn,
+    # replace relax with rosetta_scripts
+    relax_cmd = ['rosetta_scripts', '-database', database_path, '-s', cleaned_pdb_fn,
                  '-nstruct', str(nstruct), '@flags_prepare_relax']
     relax_out_fn = join(working_dir, "relax.out")
     with open(relax_out_fn, "w") as f:
