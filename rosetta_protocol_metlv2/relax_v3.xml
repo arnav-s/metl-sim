@@ -9,7 +9,7 @@
     <MutateResidue name="mutant" target="55A" new_res="ALA"/>
     <FastRelax name="relax"
                scorefxn="beta_sf"
-               disable_design="false"
+               disable_design="true"
                cartesian="true"
                repeats="10"/>
   </MOVERS>

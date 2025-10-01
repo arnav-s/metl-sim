@@ -27,7 +27,7 @@
     <FastRelax name="relax"
                scorefxn="beta_sf"
                task_operations="repack_res,no_repack"
-               disable_design="false"
+               disable_design="true"
                cartesian="true"
                repeats="10"/>
   </MOVERS>
