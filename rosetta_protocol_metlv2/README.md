@@ -1,18 +1,18 @@
 
-#Rosetta Protocol Exploration 
+# Rosetta Protocol Exploration 
 
 ## Docker Image
-1. Dowload docker image (4 GB total)
+1. Dowload docker image (9 GB total)
 ```angular2html
-docker pull rosettacommons/rosetta:latest
+docker pull arnvsharma/metl-sim:latest
 ```
 2. Give docker containers permission to access metl-sim folder on docker app.
 3. Start a mounted docker container 
 ```angular2html
-docker run -it -v /path/to/metl-sim/rosetta_protocol:/rosetta rosettacommons/rosetta:latest /bin/bash  
+docker run -it -v /path/to/metl-sim/rosetta_protocol:/rosetta arnvsharma/metl-sim:latest /bin/bash  
 ```
 
-4. Open `rosetta_protocol` in the docker container. 
+4. Cd into `/rosetta/rosetta_protocol_metlv2` in the docker container. 
 
 ## Protocols 
 
@@ -22,7 +22,7 @@ Below are all the flags for each experiment I ran. The first are changes to Sri'
 
 - Changes to current All Atom Relax Protocol
   - `flags_relax_v1` - Starting FastRelax Protocol (Cartesian Minimization) 
-  - `flags_relax_v3` - Switch mutation scheme so all residues are repacked, not only the residue that was mutated. 
+  - `flags_relax_v3` - Switch mutation scheme so all residues are repacked, not only the residue that was mutated. Add in flag to disable design.  
 Add flag to stop ignorning weight from xml script, from `ref2015` weights to `beta_nov16_cart`. 
 - Side Experiments on Parameter behavior
   - `flags_default_max_cycles` -  Confirm behavior controls in some behavior related to the number of minimization steps. 
@@ -36,6 +36,8 @@ Add flag to stop ignorning weight from xml script, from `ref2015` weights to `be
 1) Change current all atom relax script in `metl-sim`
 2) Do sweep over `default_max_cycles`, `repeat`, `restrict_repack_distance`, and `restrict_backbone_distance`.
 
+
+Some timing ideas are based on these recommendations from rosetta: https://docs.rosettacommons.org/docs/latest/getting_started/Rosetta-on-different-scales
 
 ## Outputs for each run
 - console output: `<flag>.log` 
@@ -63,17 +65,18 @@ First we will run the original protocol.
 time rosetta_scripts @flags_relax_v1 > flags_relax_v1.log 2>&1
 
 # xml: relax_v1.xml
-# total_score:  -296.420  
-# timing: 
+# total_score:  -296.429  
+# timing on macbook m4: 
+real    2m46.254s
+user    2m45.933s
+sys     0m0.311s
 
-real    1m46.206s
-user    1m46.142s
-sys     0m0.048s
+
 ```
 
 Things to note:
 
-2) The protocol looks to be using the `ref2015` loss function. 
+1) The protocol looks to be using the `ref2015` loss function. 
 Since no `-beta_nov16_cart` flag in command line. Below is a snippet of the relevant parts 
 of the log file. 
 
@@ -95,11 +98,11 @@ in `mutation.resfile` only allows design at position 55, which restricts the all
 
 ```angular2html
 core.pack.interaction_graph.interaction_graph_factory: Instantiating PDInteractionGraph
-protocols.relax.FastRelax: CMD: repack  -278.071  0  0  0.03245
-protocols.relax.FastRelax: CMD: scale:fa_rep  -276.544  0  0  0.0506
-protocols.relax.FastRelax: CMD: min  -388.857  0.815343  0.815343  0.0506
-protocols.relax.FastRelax: CMD: coord_cst_weight  -388.857  0.815343  0.815343  0.0506
-protocols.relax.FastRelax: CMD: scale:fa_rep  -310.272  0.815343  0.815343  0.154
+protocols.relax.FastRelax: CMD: repack  -309.273  0.852702  0.852702  0.154
+protocols.relax.FastRelax: CMD: scale:fa_rep  -290.813  0.852702  0.852702  0.17765
+protocols.relax.FastRelax: CMD: min  -340.924  0.529202  0.529202  0.17765
+protocols.relax.FastRelax: CMD: coord_cst_weight  -340.924  0.529202  0.529202  0.17765
+protocols.relax.FastRelax: CMD: scale:fa_rep  -311.933  0.529202  0.529202  0.3124
 core.pack.pack_rotamers: built 1 rotamers at 1 positions.
 ```
 
@@ -107,13 +110,13 @@ Fixed version:
 
 ```angular2html
 time rosetta_scripts @flags_relax_v3 > flags_relax_v3.log 2>&1
-
 # xml: relax_v3.xml
-# total_score: -237.867 
-# timing: 
-real    1m31.047s
-user    1m30.965s
-sys     0m0.069s
+# total_score:   -244.999
+# timing on macbook m4: 
+real    2m46.254s
+user    2m45.933s
+sys     0m0.311s
+
 
 ```
 
@@ -125,28 +128,27 @@ core.scoring.ScoreFunctionFactory: SCOREFUNCTION: beta_nov16_cart.wts
 
 protocols.rosetta_scripts.ParsedProtocol: =======================BEGIN MOVER MutateResidue - mutant=======================
 
-
-core.pack.task: Packer task: initialize from command line() 
-core.pack.pack_rotamers: built 1089 rotamers at 75 positions.
 core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
-protocols.relax.FastRelax: CMD: repack  -276.718  0.233159  0.233159  0.03245
-protocols.relax.FastRelax: CMD: scale:fa_rep  -274.624  0.233159  0.233159  0.0506
-protocols.relax.FastRelax: CMD: min  -323.155  0.663634  0.663634  0.0506
-protocols.relax.FastRelax: CMD: coord_cst_weight  -323.155  0.663634  0.663634  0.0506
-
+protocols.relax.FastRelax: CMD: repack  -258.971  0  0  0.022
+protocols.relax.FastRelax: CMD: scale:fa_rep  -257.052  0  0  0.02805
+protocols.relax.FastRelax: CMD: min  -343.672  0.776177  0.776177  0.02805
+protocols.relax.FastRelax: CMD: coord_cst_weight  -343.672  0.776177  0.776177  0.02805
+protocols.relax.FastRelax: CMD: scale:fa_rep  -201.588  0.776177  0.776177  0.14575
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 989 rotamers at 75 positions.
 
 ###  flags_relax_v3_structure_0001.pdb
 
-ATOM    816  N   ALA A  55     -19.908  22.128  -0.997  1.00  0.00           N  
-ATOM    817  CA  ALA A  55     -20.359  22.205   0.383  1.00  0.00           C  
-ATOM    818  C   ALA A  55     -21.289  21.050   0.748  1.00  0.00           C  
-ATOM    819  O   ALA A  55     -21.170  20.478   1.842  1.00  0.00           O  
-ATOM    820  CB  ALA A  55     -21.059  23.524   0.615  1.00  0.00           C  
-ATOM    821  H   ALA A  55     -20.138  22.883  -1.651  1.00  0.00           H  
-ATOM    822  HA  ALA A  55     -19.481  22.149   1.025  1.00  0.00           H  
-ATOM    823 1HB  ALA A  55     -21.366  23.597   1.656  1.00  0.00           H  
-ATOM    824 2HB  ALA A  55     -20.379  24.341   0.373  1.00  0.00           H  
-ATOM    825 3HB  ALA A  55     -21.934  23.580  -0.027  1.00  0.00           H  
+ATOM    816  N   ALA A  55     -20.087  22.176  -1.051  1.00  0.00           N  
+ATOM    817  CA  ALA A  55     -20.495  22.338   0.334  1.00  0.00           C  
+ATOM    818  C   ALA A  55     -21.350  21.166   0.822  1.00  0.00           C  
+ATOM    819  O   ALA A  55     -21.141  20.664   1.937  1.00  0.00           O  
+ATOM    820  CB  ALA A  55     -21.261  23.632   0.488  1.00  0.00           C  
+ATOM    821  H   ALA A  55     -20.380  22.857  -1.761  1.00  0.00           H  
+ATOM    822  HA  ALA A  55     -19.594  22.378   0.946  1.00  0.00           H  
+ATOM    823 1HB  ALA A  55     -21.537  23.770   1.531  1.00  0.00           H  
+ATOM    824 2HB  ALA A  55     -20.635  24.461   0.158  1.00  0.00           H  
+ATOM    825 3HB  ALA A  55     -22.158  23.589  -0.122  1.00  0.00           H  
 
 ```
 
@@ -161,6 +163,16 @@ Shown above (green-original pab1-`structure.pdb`, original all atom relax- `flag
 fixed all atom relax - `flags_relax_v3_structure_0001.pdb` - hot pink)
 
 
+## Not doing Cartesian minimization 
+```angular2html
+time rosetta_scripts @flags_relax_v3_no_cart > flags_relax_v3_no_cart.log 2>&1
+# xml: relax_v3_no_cart.xml
+# total_score: 
+# timing on macbook m4:
+real    0m29.883s
+user    0m29.757s
+sys     0m0.113s
+```
 
 
 
@@ -177,21 +189,34 @@ Confirmation of correctness from rosetta slack:
 time rosetta_scripts @flags_relax_default_max_cycles > flags_relax_default_max_cycles.log 2>&1
 
 # xml: relax_v3.xml
-# total_score:   -213.100   
+# total_score:   -205.181 
 # timing:
-real    0m9.672s
-user    0m9.609s
-sys     0m0.055s
+real    0m17.301s
+user    0m17.085s
+sys     0m0.201s
+
+
+
 
 
 # flags_relax_default_max_cycles.log
 
-core.pack.pack_rotamers: built 985 rotamers at 75 positions.
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 986 rotamers at 75 positions.
 core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
-protocols.relax.FastRelax: CMD: repack  -236.488  0.0156695  0.0156695  0.3124
-protocols.relax.FastRelax: CMD: scale:fa_rep  -231.915  0.0156695  0.0156695  0.34815
+protocols.relax.FastRelax: CMD: repack  -220.445  0.00740673  0.00740673  0.30745
+protocols.relax.FastRelax: CMD: scale:fa_rep  -218.551  0.00740673  0.00740673  0.31955
 core.optimization.Minimizer: [ WARNING ] LBFGS MAX CYCLES 1 EXCEEDED, BUT FUNC NOT CONVERGED!
-protocols.relax.FastRelax: CMD: min  -233.736  0.0159546  0.0159546  0.34815
+protocols.relax.FastRelax: CMD: min  -225.019  0.00778847  0.00778847  0.31955
+protocols.relax.FastRelax: CMD: coord_cst_weight  -225.019  0.00778847  0.00778847  0.31955
+protocols.relax.FastRelax: CMD: scale:fa_rep  -193.045  0.00778847  0.00778847  0.55
+
+
+# second run with 10 nstructs
+time rosetta_scripts @flags_relax_default_max_cycles > flags_relax_default_max_cycles.log 2>&1
+# xml: relax_v3.xml
+# timing:
+
 
 ```
 
@@ -209,12 +234,15 @@ Shown above (green-original pab1-`structure.pdb`,default_max_cycles set to 1 - `
 ```angular2html
 time rosetta_scripts @flags_relax_minimize_max_iter > flags_relax_minimize_max_iter.log 2>&1
 # xml: relax_v3.xml
-# total_score: -237.808 
+# total_score: -244.011 
 # timing:
+real    2m30.513s
+user    2m30.126s
+sys     0m0.349s
 
-real    1m36.783s
-user    1m35.816s
-sys     0m0.943s
+
+
+
 ```
 
 Although read in by Rosetta arg parser, this parameter is not exposed to the Rosetta FastRelax protocol. 
@@ -262,11 +290,11 @@ You can also confirm this by setting the distance to 0 Å.
 time rosetta_scripts @flags_restrict_repack > flags_restrict_repack.log 2>&1
 
 # xml: relax_v4.xml
-# total_score: -232.173
+# total_score: 
 # timing: 
-real    1m25.923s
-user    1m25.818s
-sys     0m0.087s
+
+
+
 ```
 
 And we can confirm the output is only looking at 16-17 residues to pack rotamers,
@@ -282,29 +310,69 @@ protocols.relax.FastRelax: CMD: min  -317.338  0.688015  0.688015  0.0506
 protocols.relax.FastRelax: CMD: coord_cst_weight  -317.338  0.688015  0.688015  0.0506
 ```
 
-It's hard to confirm this one visually since the repacking also effects the minimization.
-So residues that are more than 10 Å away also change, for example the disorder region in the upper left.
-
-
-![flags_relax_v3_vs_flags_restrict_repack](images/flags_relax_v3_vs_flags_restrict_repack.png)
-Shown above (fixed all atom relax - `flags_relax_v3_structure_0001.pdb` - hot pink, 
-restricted repack set to 10 Å from mutated residue - `flags_restrict_repack_structure_0001.pdb` - silver)
 
 
 
 ## Parameter - Restrict Minimizer Distance
 
-Restricting the distance of the minimizer. 
+The restrict minimizer distance is controled by the movemap. 
 
-flags_relax_restrict_backbone
+There is a parameter in the MoveMapFactory which references cartesian output. So I had to make sure (1) that 
+the minimizer was actually restricted. (pretty confident of this as in output logs). And (2) that the
+cartesian minimizer was still being utilized. (https://docs.rosettacommons.org/docs/latest/scripting_documentation/RosettaScripts/MoveMapFactories/MoveMapFactories-RosettaScripts)
 
+
+Timings from all runs constraining on restriction distance (10 or 1000-basically all atom).
+
+| Restrict Minimizer Distance | Cartesian Minimization | No Cartesian Minimization |
+|-----------------------------|------------------------|---------------------------|
+| 10                          | 33.344 s               | 16.044 s                  |
+| 1000                        | 2 m 23.044 s            | 29.903 s                  |
+
+Its very unlikely that the timing of the minimization (all atom) for cartesian is so long (almost the same as
+before, but it would be using a non cartesian coordinate system). 
+
+Visualizing the pdbs is a bit difficult as these atoms can still move. Either from the packer or from 
+other atoms which move and then move them, but they themselves are never repacked. 
+Luckily, the Cartesian minimization at 1000 looks nothing like the No cartesian minimization. This is pretty strong
+evidence that  . 
+
+
+To confirm that nothing is moving outside of a restricted distance, timings clearly show a reduction in complexity which is 
+leading me to believe it is correct. Also the side chains outside of a 10 Å radius don't move nearly as much (which makes sense). 
+
+Due to the output in the log, reduction of time, recommendations in rosetta scripts tutorials ,
+and visually less movement I'm pretty confident the restriction in working correctly. 
+
+
+Also in all logs without cartesian, no reference to this function `core.energy_methods.CartesianBondedEnergy`
+during energy loading.
+
+### Checking that `code/prepare.py` 
+
+Now we can test if the new `code/prepare.py` script is working. We will start out with 1 `nstructs`. 
 ```angular2html
-time rosetta_scripts @flags_relax_restrict_backbone > flags_relax_restrict_backbone.log 2>&1
-
-# xml: relax_v5.xml
-# total_score:
-# timing: 
-
+root@9a10c37e25b6:/rosetta# python code/prepare.py --rosetta_main_dir=/app --pdb_fn=rosetta_protocol_metlv2/structure.pdb --relax_nstruct=1 --out_dir_base=rosetta_protocol_metlv2/output/prepare_outputs
+output directory is: rosetta_protocol_metlv2/output/prepare_outputs/structure_2025-10-01_17-21-31
+Found 1 structures with lowest energy (-237.152).
 ```
 
-## Constraints Investigation
+
+Looking at output directory we see log is consistent with beta weights, doing repacking over all rotamers. 
+`total_score` is also approximately the same, but varies slightly due to random variation an the inclusion of 
+extra flags in `templates/flags_prepare_relax`.
+
+And now with more `nstructs` just to verify. 
+```angular2html
+root@a36911f8b015:/rosetta# python code/prepare.py 
+      --rosetta_main_dir=/app 
+      --pdb_fn=rosetta_protocol_metlv2/structure.pdb 
+      --relax_nstruct=3 
+      --out_dir_base=rosetta_protocol_metlv2/output/prepare_outputs
+output directory is: rosetta_protocol_metlv2/output/prepare_outputs/structure_2025-09-30_20-38-01
+Found 1 structures with lowest energy (-241.809).
+```
+
+
+## Constraints Investigation in Prepare 
+

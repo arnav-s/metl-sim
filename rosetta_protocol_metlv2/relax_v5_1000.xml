@@ -4,7 +4,7 @@
   </SCOREFXNS>
 
   <RESIDUE_SELECTORS>
-    <Neighborhood name="surrounding" resnums="55" distance="20"/>
+    <Neighborhood name="surrounding" resnums="55" distance="1000"/>
     <Not name="rest" selector="surrounding"/>
   </RESIDUE_SELECTORS>
 
