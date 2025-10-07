@@ -4,4 +4,3 @@
 -beta_nov16_cart
 -out:prefix flags_relax_v3_
 -out:file:scorefile flags_relax_v3.sc
--nstruct 10

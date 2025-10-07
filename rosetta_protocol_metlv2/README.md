@@ -22,18 +22,24 @@ Below are all the flags for each experiment I ran. The first are changes to Sri'
 
 - Changes to current All Atom Relax Protocol
   - `flags_relax_v1` - Starting FastRelax Protocol (Cartesian Minimization) 
-  - `flags_relax_v3` - Switch mutation scheme so all residues are repacked, not only the residue that was mutated. Add in flag to disable design.  
+  - `flags_relax_v3` - Switch mutation scheme so all residues are repacked, not only the residue that was mutated. Add in flag to disable design.
 Add flag to stop ignorning weight from xml script, from `ref2015` weights to `beta_nov16_cart`. 
 - Side Experiments on Parameter behavior
   - `flags_default_max_cycles` -  Confirm behavior controls in some behavior related to the number of minimization steps. 
   - `flags_loops_minimize_max_iter` - Confirm this parameter does nothing.
-  - `flags_restrict_repack` - Restrict repacked residues to those within a 10 Å distance.
-  - `flags_restrict_backbone` - 
+  - `flags_relax_v3_nstruct_10` - The fixed v3 protocol, with 10 replicates to look at deviations in output. 
+  - `flags_relax_v3_no_cart` - The fixed v3 protocol, now with no cartesian minimization.
+  - `flags_restrict_repack` - The fixed v3 protocol, now with a radius restriction around the repacked residues.
+  - `restrict_backbone_distance`
+    - `flags_relax_restrict_backbone_10` - Fixed protocol with 10 angstrom backbone restriction in cartesian space. 
+    - `flags_relax_restrict_backbone_10_no_cart` - Fixed protocol with 10 angstrom backbone restriction in non-cartesian space. 
+    - `flags_relax_restrict_backbone_1000`- Fixed protocol with 1000 (basically no) angstrom backbone restriction in cartesian space. 
+    - `flags_relax_restrict_backbone_1000_no_cart` -Fixed protocol with 1000 (basically no) angstrom backbone restriction in non-cartesian space. 
 
 
 ## Recommendations
 
-1) Change current all atom relax script in `metl-sim`
+1) Change current all atom relax script in `metl-sim` (flags_relax_v3)
 2) Do sweep over `default_max_cycles`, `repeat`, `restrict_repack_distance`, and `restrict_backbone_distance`.
 
 
@@ -65,18 +71,16 @@ First we will run the original protocol.
 time rosetta_scripts @flags_relax_v1 > flags_relax_v1.log 2>&1
 
 # xml: relax_v1.xml
-# total_score:  -296.429  
+# total_score: -296.429 
 # timing on macbook m4: 
-real    2m46.254s
-user    2m45.933s
-sys     0m0.311s
-
-
+real    2m41.646s
+user    2m40.981s
+sys     0m0.274s
 ```
 
 Things to note:
 
-1) The protocol looks to be using the `ref2015` loss function. 
+1) The protocol looks to be using the `ref2015` weights. 
 Since no `-beta_nov16_cart` flag in command line. Below is a snippet of the relevant parts 
 of the log file. 
 
@@ -111,13 +115,11 @@ Fixed version:
 ```angular2html
 time rosetta_scripts @flags_relax_v3 > flags_relax_v3.log 2>&1
 # xml: relax_v3.xml
-# total_score:   -244.999
+# total_score:  -244.011 
 # timing on macbook m4: 
-real    2m46.254s
-user    2m45.933s
-sys     0m0.311s
-
-
+real    2m28.583s
+user    2m28.377s
+sys     0m0.155s
 ```
 
 Confirmation in relevant outputs.
@@ -152,27 +154,69 @@ ATOM    825 3HB  ALA A  55     -22.158  23.589  -0.122  1.00  0.00           H
 
 ```
 
+## Looking at output structures for higher nstructsb (10) 
 
-The three structures below are compared, and it is clear the two protocols produce different outputs. 
-Although the protocol is stochastic, large deviations like this were not observed if the same protocol 
-was run twice. 
+```angular2html
+time rosetta_scripts @flags_relax_v3_nstruct_10 > flags_relax_v3_nstruct_10.log 2>&1
+# xml: relax_v3.xml 
+# total_score's in flags_relax_v3_nstruct_10.sc 
+# timing on macbook m4:
+
+real    23m27.171s
+user    23m26.195s
+sys     0m0.582s
 
 
-![structure_vs_flags_relax_v1_vs_flags_relax_v3](images/structure_vs_flags_relax_v1_vs_flags_relax_v3.png)
-Shown above (green-original pab1-`structure.pdb`, original all atom relax- `flags_relax_v1_structure_0001.pdb` - blue,
-fixed all atom relax - `flags_relax_v3_structure_0001.pdb` - hot pink)
+```
+<img src="images/cartesian_relax_v3_10_nstructs.png" alt="Diagram" width="400">
+
+
+This the 10 cartesian output structures. They all look to have a similar output structure. And their 
+total_score is similar. 
+
 
 
 ## Not doing Cartesian minimization 
+
+This is the same fixed protocol as above except with no cartesian minimization. 
 ```angular2html
 time rosetta_scripts @flags_relax_v3_no_cart > flags_relax_v3_no_cart.log 2>&1
 # xml: relax_v3_no_cart.xml
-# total_score: 
-# timing on macbook m4:
-real    0m29.883s
-user    0m29.757s
-sys     0m0.113s
+# total_score: -247.282 
+# timing on macbook m4: 
+real    0m29.787s
+user    0m29.691s
+sys     0m0.081s
 ```
+Looking at the output structures we see it does look to move substantially more in non cartesian space. Perhaps due
+to more degrees of freedom:
+
+<img src="images/structure_vs_no_cart_vs_cart_relax_v3.png" alt="Diagram" width="400">
+
+- Green, Starting pab1 structure.
+- Red, No cartesian minimization of fixed relax protocol 
+- Yellow, fixed relax protocol, cartesian minimization
+
+
+Looking over 10 possible structures to see if they differ greatly in the non cartesian optimimization. 
+```angular2html
+time rosetta_scripts @flags_relax_v3_no_cart_nstruct_10 > flags_relax_v3_no_cart_nstruct_10.log 2>&1
+# xml: relax_v3_no_cart.xml
+# total_score's in flags_relax_v3_no_cart_nstruct_10.sc
+# timing on macbook m4: 
+real    4m20.432s
+user    4m20.131s
+sys     0m0.228s
+```
+
+The structures appear to converge to a similar solution and all have similar total_score's. 
+
+<img src="images/no_cartesian_relax_v3_10_nstructs.png" alt="Diagram" width="400">
+
+
+
+
+
 
 
 
@@ -189,14 +233,11 @@ Confirmation of correctness from rosetta slack:
 time rosetta_scripts @flags_relax_default_max_cycles > flags_relax_default_max_cycles.log 2>&1
 
 # xml: relax_v3.xml
-# total_score:   -205.181 
+# total_score: -205.246  
 # timing:
-real    0m17.301s
-user    0m17.085s
-sys     0m0.201s
-
-
-
+real    0m16.701s
+user    0m16.619s
+sys     0m0.068s
 
 
 # flags_relax_default_max_cycles.log
@@ -211,22 +252,10 @@ protocols.relax.FastRelax: CMD: min  -225.019  0.00778847  0.00778847  0.31955
 protocols.relax.FastRelax: CMD: coord_cst_weight  -225.019  0.00778847  0.00778847  0.31955
 protocols.relax.FastRelax: CMD: scale:fa_rep  -193.045  0.00778847  0.00778847  0.55
 
-
-# second run with 10 nstructs
-time rosetta_scripts @flags_relax_default_max_cycles > flags_relax_default_max_cycles.log 2>&1
-# xml: relax_v3.xml
-# timing:
-
-
 ```
 
 You can also confirm by looking in pymol at the comparison between the two structures 
 and seeing no obvious minimization. Especially if set to 0.
-
-
-![default_max_cycles](images/structure_vs_flags_default_max_cycles.png)
-Shown above (green-original pab1-`structure.pdb`,default_max_cycles set to 1 - `flags_relax_default_max_cycles_structure_0001.pdb` - yellow)
-
 
 
 
@@ -234,14 +263,11 @@ Shown above (green-original pab1-`structure.pdb`,default_max_cycles set to 1 - `
 ```angular2html
 time rosetta_scripts @flags_relax_minimize_max_iter > flags_relax_minimize_max_iter.log 2>&1
 # xml: relax_v3.xml
-# total_score: -244.011 
+# total_score: -245.195 
 # timing:
-real    2m30.513s
-user    2m30.126s
-sys     0m0.349s
-
-
-
+real    2m38.303s
+user    2m38.140s
+sys     0m0.128s
 
 ```
 
@@ -249,11 +275,6 @@ Although read in by Rosetta arg parser, this parameter is not exposed to the Ros
 For example, the C alpha carbons clearly moved despite setting 
 this parameter to 0 which shouldn’t be possible in the only
 repack setting.
-
-![minimize_max_iter](images/structure_vs_flags_relax_v3_vs_flags_relax_minimize_max_iter.png)
-Shown above (green-original pab1-`structure.pdb`, fixed all atom relax - `flags_relax_v3_structure_0001.pdb` - hot pink, 
-minimize_max_iter set to zero - `flags_relax_minimize_max_iter_structure_0001.pdb` - tan)
-
 
 
 ## Parameter Restrict Repack 
@@ -279,22 +300,21 @@ The NeighborhoodResidueSelector selects all the residues
 It sets each position in the ResidueSubset that corresponds
   to a residue within a certain distance of the focused set
   of residues as well as the residues in the focused set
-  to true, and sets all other positions to false
+  to true, and sets all other positions to false.
 ```
 
 It looks like the residue itself is also chosen. 
-You can also confirm this by setting the distance to 0 Å.
+You can also confirm this by setting the distance to 0 Å and still 1 residue is selected for repacking.
 
 
 ```angular2html
 time rosetta_scripts @flags_restrict_repack > flags_restrict_repack.log 2>&1
-
 # xml: relax_v4.xml
-# total_score: 
+# total_score: -232.386    
 # timing: 
-
-
-
+real    2m23.395s
+user    2m23.247s
+sys     0m0.105s
 ```
 
 And we can confirm the output is only looking at 16-17 residues to pack rotamers,
@@ -311,8 +331,6 @@ protocols.relax.FastRelax: CMD: coord_cst_weight  -317.338  0.688015  0.688015  
 ```
 
 
-
-
 ## Parameter - Restrict Minimizer Distance
 
 The restrict minimizer distance is controled by the movemap. 
@@ -322,20 +340,28 @@ the minimizer was actually restricted. (pretty confident of this as in output lo
 cartesian minimizer was still being utilized. (https://docs.rosettacommons.org/docs/latest/scripting_documentation/RosettaScripts/MoveMapFactories/MoveMapFactories-RosettaScripts)
 
 
-Timings from all runs constraining on restriction distance (10 or 1000-basically all atom).
+Timings from all runs constraining on restriction distance (10 or 1000-basically all atom), 
+the <`no_cart`> flag is only included in the non-cartesian files.
 
-| Restrict Minimizer Distance | Cartesian Minimization | No Cartesian Minimization |
-|-----------------------------|------------------------|---------------------------|
-| 10                          | 33.344 s               | 16.044 s                  |
-| 1000                        | 2 m 23.044 s            | 29.903 s                  |
+```angular2html
+time rosetta_scripts @flags_relax_restrict_backbone_<angsrom_distance>_<no_cart> > flags_relax_restrict_backbone_<angsrom_distance>_<no_cart>.log   2>&1
+```
+
+| Restrict Minimizer Distance | Cartesian Minimization | total_score (different score functions<br/> for cartesian and non-cartesian!) | Time     |
+|--------------------------|------------------------|--------------------------------------------------------------------------|----------|
+| 10                       | True                   | -185.467                                                                 | 33.609s  |
+| 10                       | False                  | -229.976                                                                 | 16.660s  |
+| 1000                     | True                   | -244.011                                                                 | 150.953s |
+| 1000                     | False                  | -248.425                                                                 | 29.669s  |
 
 Its very unlikely that the timing of the minimization (all atom) for cartesian is so long (almost the same as
 before, but it would be using a non cartesian coordinate system). 
 
+It looks like the non cartesian minimization is 5x times faster for the all atom relax at least for this 1 pab1 mutation. 
+
 Visualizing the pdbs is a bit difficult as these atoms can still move. Either from the packer or from 
 other atoms which move and then move them, but they themselves are never repacked. 
-Luckily, the Cartesian minimization at 1000 looks nothing like the No cartesian minimization. This is pretty strong
-evidence that  . 
+Luckily, the Cartesian minimization at 1000 looks nothing like the No cartesian minimization. 
 
 
 To confirm that nothing is moving outside of a restricted distance, timings clearly show a reduction in complexity which is 
@@ -348,12 +374,18 @@ and visually less movement I'm pretty confident the restriction in working corre
 Also in all logs without cartesian, no reference to this function `core.energy_methods.CartesianBondedEnergy`
 during energy loading.
 
-### Checking that `code/prepare.py` 
+## Checking `code/prepare.py`
 
-Now we can test if the new `code/prepare.py` script is working. We will start out with 1 `nstructs`. 
+The two flags can turn off the cartesian minimization `--no_cart` and ramping constrainsts 
+for the prepare `--no_ramping_constraints`. 
+
+I'm using the default 5 relax repeats for the relax in the prepare. 
+
+First we will run it with ramping constraints (recommended) and in cartesian space. (Look to `templates/prepare_wd_template` 
+or output folder `rosetta_protocol_metlv2/output/prepare_outputs` for scripts.)
 ```angular2html
 root@9a10c37e25b6:/rosetta# python code/prepare.py --rosetta_main_dir=/app --pdb_fn=rosetta_protocol_metlv2/structure.pdb --relax_nstruct=1 --out_dir_base=rosetta_protocol_metlv2/output/prepare_outputs
-output directory is: rosetta_protocol_metlv2/output/prepare_outputs/structure_2025-10-01_17-21-31
+output directory is: rosetta_protocol_metlv2/output/prepare_outputs/structure_2025-10-06_19-13-25
 Found 1 structures with lowest energy (-237.152).
 ```
 
@@ -362,17 +394,44 @@ Looking at output directory we see log is consistent with beta weights, doing re
 `total_score` is also approximately the same, but varies slightly due to random variation an the inclusion of 
 extra flags in `templates/flags_prepare_relax`.
 
-And now with more `nstructs` just to verify. 
+
+
+And now with more `nstructs` just to verify it still works. 
 ```angular2html
-root@a36911f8b015:/rosetta# python code/prepare.py 
-      --rosetta_main_dir=/app 
-      --pdb_fn=rosetta_protocol_metlv2/structure.pdb 
-      --relax_nstruct=3 
-      --out_dir_base=rosetta_protocol_metlv2/output/prepare_outputs
-output directory is: rosetta_protocol_metlv2/output/prepare_outputs/structure_2025-09-30_20-38-01
-Found 1 structures with lowest energy (-241.809).
+root@9a10c37e25b6:/rosetta# python code/prepare.py --rosetta_main_dir=/app --pdb_fn=rosetta_protocol_metlv2/structure.pdb --relax_nstruct=3 --out_dir_base=rosetta_protocol_metlv2/output/prepare_outputs
+output directory is: rosetta_protocol_metlv2/output/prepare_outputs/structure_2025-10-06_19-16-34
+Found 3 structures with lowest energy (-237.152).
 ```
 
 
-## Constraints Investigation in Prepare 
+Now lets take out the ramping constraints. As expected it can into a much lower energy well that is much more similar 
+to the tests we were running above. 
+```angular2html
+root@9a10c37e25b6:/rosetta# python code/prepare.py --rosetta_main_dir=/app --pdb_fn=rosetta_protocol_metlv2/structure.pdb --relax_nstruct=1 --out_dir_base=rosetta_protocol_metlv2/output/prepare_outputs --no_rampings_constraints
+output directory is: rosetta_protocol_metlv2/output/prepare_outputs/structure_2025-10-06_19-23-23
+template_dir: templates/prepare_no_ramping_constraints_wd_template
+Found 1 structures with lowest energy (-247.814).
+```
+
+
+Now lets look at no cartesian optimization without ramping constraints. Remember score functions 
+can't be compared to above. 
+
+```angular2html
+root@9a10c37e25b6:/rosetta# python code/prepare.py --rosetta_main_dir=/app --pdb_fn=rosetta_protocol_metlv2/structure.pdb --relax_nstruct=1 --out_dir_base=rosetta_protocol_metlv2/output/prepare_outputs --no_rampings_constraints --no_cart
+output directory is: rosetta_protocol_metlv2/output/prepare_outputs/structure_2025-10-06_19-26-18
+template_dir: templates/prepare_no_cart_no_ramping_constraints_wd_template
+Found 1 structures with lowest energy (-250.488).
+```
+
+
+Finally no cartesian optimization with ramping constraints:
+```angular2html
+root@9a10c37e25b6:/rosetta# python code/prepare.py --rosetta_main_dir=/app --pdb_fn=rosetta_protocol_metlv2/structure.pdb --relax_nstruct=1 --out_dir_base=rosetta_protocol_metlv2/output/prepare_outputs  --no_cart
+output directory is: rosetta_protocol_metlv2/output/prepare_outputs/structure_2025-10-06_19-27-40
+template_dir: templates/prepare_no_cart_wd_template
+Found 1 structures with lowest energy (-252.824).
+```
+
+
 

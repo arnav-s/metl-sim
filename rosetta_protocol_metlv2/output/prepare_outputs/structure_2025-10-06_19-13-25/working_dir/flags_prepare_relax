@@ -1,0 +1,11 @@
+-ignore_unrecognized_res
+-ex1
+-ex2
+-use_input_sc
+-flip_HNQ
+-no_optH false
+-beta_nov16_cart
+-relax:constrain_relax_to_start_coords
+-relax:coord_constrain_sidechains
+-relax:ramp_constraints false
+-parser:protocol prepare_relax.xml

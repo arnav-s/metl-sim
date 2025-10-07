@@ -152,7 +152,16 @@ def main(args):
     os.makedirs(output_dir)
     print("output directory is: {}".format(output_dir), flush=True)
 
-    template_dir = "templates/prepare_wd_template"
+    if args.no_cart and not args.no_rampings_constraints:
+        template_dir="templates/prepare_no_cart_wd_template"
+    elif not args.no_cart and args.no_rampings_constraints:
+        template_dir = "templates/prepare_no_ramping_constraints_wd_template"
+    elif args.no_cart and args.no_rampings_constraints:
+        template_dir = "templates/prepare_no_cart_no_ramping_constraints_wd_template"
+    else:
+        template_dir = "templates/prepare_wd_template"
+
+    print(f'template_dir: {template_dir}')
     working_dir = join(output_dir, "working_dir")
 
     # set up the working directory
@@ -194,6 +203,16 @@ if __name__ == "__main__":
 
     parser.add_argument("--keep_ligand",
                         help="whether to run clean_pdb.py or clean_pdb_keep_ligand.py",
+                        action="store_true",
+                        default=False)
+
+    parser.add_argument("--no_cart",
+                        help="whether to use cartesian optimization",
+                        action="store_true",
+                        default=False)
+
+    parser.add_argument("--no_rampings_constraints",
+                        help="whether to use cartesian optimization",
                         action="store_true",
                         default=False)
 

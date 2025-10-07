@@ -1,0 +1,15 @@
+--rosetta_main_dir
+/app
+--pdb_fn
+rosetta_protocol_metlv2/structure.pdb
+--no_rampings_constraints
+--chain
+ignorechain
+--relax_nstruct
+1
+--n_procs
+1
+--out_dir_base
+rosetta_protocol_metlv2/output/prepare_outputs
+--conda_pack_env
+None

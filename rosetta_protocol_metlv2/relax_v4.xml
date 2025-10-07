@@ -5,7 +5,7 @@
 
 
   <RESIDUE_SELECTORS>
-    <Neighborhood name="surrounding" resnums="55" distance="1000"/>
+    <Neighborhood name="surrounding" resnums="55" distance="10"/>
     <Not name="rest" selector="surrounding"/>
   </RESIDUE_SELECTORS>
 
@@ -34,7 +34,7 @@
 
   <PROTOCOLS>
     <!-- make sure to add a new mover for each new mutant-->
-<!--    <Add mover_name="mutant"/>-->
+    <Add mover_name="mutant"/>
     <Add mover="relax"/>
   </PROTOCOLS>
 
