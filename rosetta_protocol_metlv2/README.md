@@ -374,6 +374,44 @@ and visually less movement I'm pretty confident the restriction in working corre
 Also in all logs without cartesian, no reference to this function `core.energy_methods.CartesianBondedEnergy`
 during energy loading.
 
+
+## Bringing all parameters together!
+
+We want to have a protocol which can allow side chain repacking at some allowed distance, and backbone
+minimization at some allowed distance.
+
+Leaving the repack restriction at 10 Å otherwise it would be the same as the table above. 
+
+
+```angular2html
+ time rosetta_scripts @flags_relax_v6_<angsrom_distance>_<no_cart> > flags_relax_v6_<angsrom_distance>_<no_cart>.log   2>&1
+```
+Confirmation of restricted repack: 
+```angular2html
+core.pack.pack_rotamers: built 150 rotamers at 16 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -224.906  0.127632  0.127632  0.022
+protocols.relax.FastRelax: CMD: scale:fa_rep  -224.128  0.127632  0.127632  0.02805
+protocols.relax.FastRelax: CMD: min  -237.197  0.289991  0.289991  0.02805
+protocols.relax.FastRelax: CMD: coord_cst_weight  -237.197  0.289991  0.289991  0.02805
+protocols.relax.FastRelax: CMD: scale:fa_rep  -207.001  0.289991  0.289991  0.14575
+```
+
+
+
+| Restrict Minimizer Distance | Cartesian Minimization | total_score (different score functions<br/> for cartesian and non-cartesian!) | Time      |
+|--------------------------|------------------------|-------------------------------------------------------------------------------|-----------|
+| 10                       | True                   | -181.417                                                                      | 24.709s   |
+| 10                       | False                  | -213.509                                                                      | 9.026s    |
+| 1000                     | True                   |    -232.386                                                                             | 2m19.875s |
+| 1000                     | False                  |     -248.106                                                                              |  18.680s         |
+
+
+
+
+
+
+
 ## Checking `code/prepare.py`
 
 The two flags can turn off the cartesian minimization `--no_cart` and ramping constrainsts 
