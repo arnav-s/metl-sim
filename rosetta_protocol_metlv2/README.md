@@ -494,8 +494,20 @@ docker run -it -v /path/to/metl-sim:/rosetta arnvsharma/metl-sim:latest /bin/bas
 4. Now, in the docker container, run the pab1 example with wild type and a single mutation in cartesian space in the metl-sim folder (runtime ~5-10 minutes): 
 
 ```angular2html
-time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example.txt
+root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example.txt
+Running Rosetta on variant pab1_cm.pdb _wt (1/2)
+Processing variant pab1_cm.pdb _wt took 187.46
+Running Rosetta on variant pab1_cm.pdb L55A (2/2)
+Processing variant pab1_cm.pdb L55A took 178.67
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-23_18-06-56_B7MSBi4dwFGm/pairwise_energies.h5
+
+real    6m7.063s
+user    6m7.236s
+sys     0m2.585s
 ```
+
+The reason why it took so long was because I did two nstructs to test out  the functionality of the pairwise scoring and filter 
+scores. Since these require different scoring, etc. 
 
 This will output all the files and documents to `rosetta_protocol_metlv2/output/energize_outputs` . 
 

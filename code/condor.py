@@ -143,7 +143,7 @@ def fetch_repo(github_tag, github_token, out_dir):
     # https://stackoverflow.com/questions/17285464/whats-the-best-way-to-download-file-using-urllib3
     # https://stackoverflow.com/questions/27387783/how-to-download-a-file-with-urllib3
 
-    url = "https://github.com/arnav-s/metl-sim{}.tar.gz".format(github_tag)
+    url = "https://github.com/arnav-s/metl-sim/archive/{}.tar.gz".format(github_tag)
 
     http = urllib3.PoolManager()
     # todo: when repo is public, authorization token will no longer be needed
