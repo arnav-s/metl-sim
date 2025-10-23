@@ -5,6 +5,7 @@ from typing import Optional
 
 from Bio import SeqIO, PDB
 from Bio.PDB.PDBParser import PDBParser
+from Bio.SeqIO.PdbIO import AtomIterator
 
 
 def save_argparse_args(args_dict, out_fn):
@@ -47,39 +48,18 @@ def sort_variant_mutations(variants):
 
 
 def get_seq_from_pdb(pdb_fn):
-    """ uses atom iterator method """
+    # do it the hacky way that avoids parsing the PDB file header which may not be present
+    structure = PDBParser().get_structure(None, pdb_fn)
+    records = [record for record in AtomIterator(None, structure)]
 
-    # load the text of the PDB
-    with open(pdb_fn, "r") as f:
-        pdb_lines = f.readlines()
+    if len(records) > 1:
+        # all our FASTAs should have single records only
+        raise ValueError("pdb file has more than one record: {}".format(pdb_fn))
 
-    # remove everything after the /last/ "TER" line (supports w/ multiple chains)
-    # find the index of the last "TER" line
-    ter_index = None
-    for i, line in reversed(list(enumerate(pdb_lines))):
-        if line.startswith("TER"):
-            ter_index = i
-            break
+    # the base sequence
+    seq = str(records[0].seq)
 
-    # if no "TER" line is found, this will raise an error as it would be an invalid PDB
-    if ter_index is None:
-        raise ValueError("Invalid PDB file: No 'TER' line found.")
-
-    # keep only the lines up to and including the last "TER" line
-    filtered_pdb_lines = pdb_lines[:ter_index + 1]
-
-    filtered_pdb_text = "".join(filtered_pdb_lines)
-
-    # load the seq records from pdb_text
-    # seq_records = list(SeqIO.parse(pdb_fn, "pdb-atom"))
-    seq_records = list(SeqIO.parse(StringIO(filtered_pdb_text), "pdb-atom"))
-
-    # found more than one chain
-    if len(seq_records) > 1:
-        raise ValueError("pdb contains more than one chain: {}".format(pdb_fn))
-
-    return str(seq_records[0].seq)
-
+    return seq
 
 def clean_pdb_data(pdb_fn):
     """ only keep ATOM and HETATM lines """
@@ -161,6 +141,15 @@ def extract_seq_from_pdb(pdb_fn: str,
         return {ch.id: seq for ch, seq in zip(chains, sequences)}
     else:
         return sequences[0]
+
+def return_pdb_chains(pdb_handle):
+    pdb_parser = PDBParser()
+    structure = pdb_parser.get_structure("structure", pdb_handle)
+
+    # retrieve the chains in this PDB
+    chains = list(structure.get_chains())
+
+    return chains
 
 
 def get_tar_command():

@@ -473,3 +473,37 @@ Found 1 structures with lowest energy (-252.824).
 
 
 
+## energize_pairwise.py
+
+
+This is the new rosetta protocol and the accompanying changes to the submission framework to meet that protocol. Now many rosetta hyperparameters can now be changed from the command line. Additionally, an in depth analysis of the rosetta protocol and what its outputs constitute was done in /rosetta_protocol_metlv2 . Updates were also done to the condor submission framework (but unclear if we will use for the future studies.) 
+
+
+To run an example on local PC. Do the following 3 steps: 
+
+1. Dowload docker image (9 GB total)
+```angular2html
+docker pull arnvsharma/metl-sim:latest
+```
+2. Give docker containers permission to access metl-sim folder on docker app.
+3. Start a mounted docker container 
+```angular2html
+docker run -it -v /path/to/metl-sim:/rosetta arnvsharma/metl-sim:latest /bin/bash  
+```
+
+4. Now, in the docker container, run the pab1 example with wild type and a single mutation in cartesian space in the metl-sim folder (runtime ~5-10 minutes): 
+
+```angular2html
+time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example.txt
+```
+
+This will output all the files and documents to `rosetta_protocol_metlv2/output/energize_outputs` . 
+
+
+=====================
+Example run with CHTC for PR consistency (but may change if Arnav has different submission framework): 
+
+
+
+
+

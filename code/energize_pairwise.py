@@ -5,12 +5,11 @@ import subprocess
 import shutil
 import os
 import sys
-from os.path import isdir, join, basename, abspath
+from os.path import isdir, join, basename
 import uuid
 import socket
 import csv
-import platform
-import re,json
+import re
 
 import shortuuid
 import numpy as np
@@ -18,6 +17,7 @@ from scipy.sparse import csr_matrix
 import pandas as pd
 import h5py
 
+from utils import return_pdb_chains
 from templates import fill_templates
 import time
 
@@ -28,7 +28,9 @@ class RosettaError(Exception):
 
 
 def prep_working_dir(template_dir, working_dir, pdb_fn, chain, variant,
-                     relax_distance, relax_repeats, overwrite_wd=False):
+                     rosetta_hparams, overwrite_wd=True):
+
+
     """ prep the working directory by copying over files from the template directory, modifying as needed """
     # delete the current working directory if one exists
     if overwrite_wd:
@@ -51,41 +53,29 @@ def prep_working_dir(template_dir, working_dir, pdb_fn, chain, variant,
 
     # fill the template rosetta arguments (Rosetta scripts XML files and resfile) for this variant
     # note that if the variant is the wild-type (no mutations), then there is no need to fill these in (wont be used)
-    if variant != "_wt":
-        fill_templates(template_dir, chain, variant, relax_distance, relax_repeats, working_dir)
+
+    fill_templates(template_dir, chain, variant,rosetta_hparams, working_dir,pdb_fn)
+
 
     # copy over files from the template dir that don't need to be changed
-    files_to_copy = ["flags_mutate", "flags_relax", "flags_relax_all", "flags_score_pairwise", "flags_filter", "flags_centroid",
-                     "filter_3rd.xml", "total_hydrophobic_weights_version1.wts",
-                     "total_hydrophobic_weights_version2.wts"]
+    files_to_copy = os.listdir(template_dir)
+
+    assert "relax.xml" not in files_to_copy, "Cannot name a file in template directory relax.xml - protected name , use relax_temp.xml instead for the template relax xml script"
+    assert "flags_relax" not in files_to_copy , "Cannot name a file in template directory flags_relax - protected name, us flags_relax_temp instead for the template relax flags "
+
+
 
     for fn in files_to_copy:
         shutil.copy(join(template_dir, fn), working_dir)
 
 
-def run_mutate_step(relax_bin_fn, database_path, mutate_default_max_cycles, working_dir):
-    # todo: should this use the relax binary or rosetta_scripts binary? both seem to work the same
-    mutate_cmd = [relax_bin_fn, '-database', database_path,
-                  '-default_max_cycles', str(mutate_default_max_cycles), '@flags_mutate']
-    mutate_out_fn = join(working_dir, "mutate.out")
-    # to completely void output, can direct it to subprocess.DEVNULL instead of f
-    with open(mutate_out_fn, "w") as f:
-        return_code = subprocess.call(mutate_cmd, cwd=working_dir, stdout=f, stderr=f)
-    if return_code != 0:
-        raise RosettaError("Mutate step did not execute successfully. Return code: {}".format(return_code))
+def run_relax_step(rosetta_scripts_bin_fn, database_path, working_dir):
 
-
-def run_relax_step(relax_bin_fn, database_path, relax_nstruct, relax_repeats, working_dir, variant_has_mutations=True):
-    # todo: should this use the relax binary or rosetta_scripts binary? both seem to work the same
-    if variant_has_mutations:
-        # this is the main way to run relax for variants, where the rosettascript protocol specified in @flags_relax
-        # and relax_template.xml is used to only relax around the mutated residues
-        relax_cmd = [relax_bin_fn, '-database', database_path, '-nstruct', str(relax_nstruct), '@flags_relax']
-    else:
-        # this is for running relax on the wild-type structure, without mutating it, in which case we don't
-        # select residues around the mutated positions (there are none), just relax the whole structure
-        relax_cmd = [relax_bin_fn, '-database', database_path, '-nstruct', str(relax_nstruct),
-                     '-relax:default_repeats', str(relax_repeats), '@flags_relax_all']
+    # templates have been filled in to account if a variant_has_mutations=True
+    # the _wt edge case has already been set through these flags.
+    relax_cmd = [rosetta_scripts_bin_fn,
+                 '-database', database_path,
+                 '@flags_relax']
 
     relax_out_fn = join(working_dir, "relax.out")
     with open(relax_out_fn, "w") as f:
@@ -97,53 +87,26 @@ def run_relax_step(relax_bin_fn, database_path, relax_nstruct, relax_repeats, wo
 def run_filter_step(rosetta_scripts_bin_fn, database_path, working_dir):
     filter_cmd = [rosetta_scripts_bin_fn, '-database', database_path, '@flags_filter']
     filter_out_fn = join(working_dir, "filter.out")
+
     with open(filter_out_fn, "w") as f:
         return_code = subprocess.call(filter_cmd, cwd=working_dir, stdout=f, stderr=f)
     if return_code != 0:
         raise RosettaError("Filter step did not execute successfully. Return code: {}".format(return_code))
 
 
-def run_centroid_step(score_jd2_bin_fn, database_path, working_dir):
-    centroid_cmd = [score_jd2_bin_fn, '-database', database_path, '@flags_centroid']
-    centroid_out_fn = join(working_dir, "centroid.out")
-    with open(centroid_out_fn, "w") as f:
-        return_code = subprocess.call(centroid_cmd, cwd=working_dir, stdout=f, stderr=f)
-    if return_code != 0:
-        raise RosettaError("Centroid step did not execute successfully. Return code: {}".format(return_code))
-
-
 def run_pairwise_step(score_pairwise_bin_fn, database_path, working_dir):
-    centroid_cmd = [score_pairwise_bin_fn, '-database', database_path, '@flags_score_pairwise']
-    centroid_out_fn = join(working_dir, "pairwise.out")
-    with open(centroid_out_fn, "w") as f:
-        return_code = subprocess.call(centroid_cmd, cwd=working_dir, stdout=f, stderr=f)
+    pairwise_cmd = [score_pairwise_bin_fn, '-database', database_path, '@flags_score_pairwise']
+    pairwise_out_fn = join(working_dir, "pairwise.out")
+    with open(pairwise_out_fn, "w") as f:
+        return_code = subprocess.call(pairwise_cmd, cwd=working_dir, stdout=f, stderr=f)
     if return_code != 0:
-        raise RosettaError("Centroid step did not execute successfully. Return code: {}".format(return_code))
+        raise RosettaError("Pairwise pose evaluation did not execute successfully. Return code: {}".format(return_code))
 
 
-def get_rosetta_paths(rosetta_main_dir: str):
-    '''# path to rosetta binaries which are used for the various steps
-    # subprocess wants a full path... or "./", so let's just add abspath
-    if platform.system() == "Linux":
-        relax_bin_fn = "relax.static.linuxgccrelease"
-        rosetta_scripts_bin_fn = "rosetta_scripts.static.linuxgccrelease"
-        score_jd2_bin_fn = "score_jd2.static.linuxgccrelease"
-        score_pairwise_bin_fn = "residue_energy_breakdown.static.linuxgccrelease"
-    elif platform.system() == "Darwin":
-        relax_bin_fn = "relax.static.macosclangrelease"
-        rosetta_scripts_bin_fn = "rosetta_scripts.static.macosclangrelease"
-        score_jd2_bin_fn = "score_jd2.static.macosclangrelease"
-        score_pairwise_bin_fn = "residue_energy_breakdown.static.macosclangrelease"
-    else:
-        raise ValueError("unsupported platform: {}".format(platform.system()))
-
-    relax_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", relax_bin_fn))
-    rosetta_scripts_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", rosetta_scripts_bin_fn))
-    score_jd2_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", score_jd2_bin_fn))
-    score_pairwise_bin_fn = abspath(join(rosetta_main_dir, "source", "bin", score_pairwise_bin_fn))
-
-    # path to the rosetta database
-    database_path = abspath(join(rosetta_main_dir, "database"))'''
+def get_rosetta_paths():
+    '''
+    Paths must be on rosetta docker container
+    '''
 
     # These binaries are packaged in the Docker container
     relax_bin_fn = 'relax'
@@ -193,66 +156,60 @@ def write_pairwise_energies(database_file: str, pdb_fn: str, variant: str, pairw
         write_hdf_data(grp, pairwise_scores)
         
 
+def run_filter_pairwise_pipeline(working_dir:str,idx:str,run_times:dict):
+    # now I need to fill in the flag files for the proper idx of interest
+    template_fns = ["flags_score_pairwise_temp", "flags_filter_temp"]
+    output_fns = ["flags_score_pairwise", "flags_filter"]
 
-def run_rosetta_pipeline(rosetta_main_dir: str,
-                         working_dir: str,
-                         mutate_default_max_cycles: int,
-                         relax_nstruct: int,
-                         relax_repeats: int,
-                         variant_has_mutations: bool = True):
+    for template_fn, output_fn in zip(template_fns, output_fns):
+        # load the template
+        template_fn = join(working_dir,template_fn)
+        with open(template_fn, "r") as f:
+            template_str = f.read()
 
-    # keep track of how long it takes to run Rosetta
-    all_start = time.time()
+        # fill in the template
+        formatted = template_str.format(idx_placeholder = idx)
+
+        with open(join(working_dir, output_fn), "w") as f:
+            f.write(formatted)
+
 
     # get the paths to the rosetta binaries and database
-    relax_bin_fn, rosetta_scripts_bin_fn,  score_jd2_bin_fn, score_pairwise_bin_fn, database_path = get_rosetta_paths(rosetta_main_dir)
-
-    # this branch logic is just handling the special case of the "_wt" variant (no mutations)
-    mt_run_time = 0
-    '''
-    TODO: Confirm if this step is redundant. Sri's protocol does mutate + relax in the same step.
-
-    if variant_has_mutations:
-        mt_start_time = time.time()
-        run_mutate_step(relax_bin_fn, database_path, mutate_default_max_cycles, working_dir)
-        mt_run_time = time.time() - mt_start_time
-        # print("Mutate step took {:.2f}".format(mt_run_time))
-    else:
-        # variant has no mutations (wild-type), so just rename structure.pdb to structure_0001.pdb
-        # which is the expected structure filename for the remaining pipelie steps
-        os.rename(join(working_dir, "structure.pdb"), join(working_dir, "structure_0001.pdb"))
-    '''
-
-    # relax also needs to know whether the variant has mutations because it needs to either run relax
-    # around just the mutated residues or around the whole structure
-    rx_start_time = time.time()
-    run_relax_step(relax_bin_fn, database_path, relax_nstruct, relax_repeats, working_dir, variant_has_mutations)
-    rx_run_time = time.time() - rx_start_time
-    # print("Relax step took {:.2f}".format(rx_run_time))
+    relax_bin_fn, rosetta_scripts_bin_fn,  score_jd2_bin_fn, score_pairwise_bin_fn, database_path = get_rosetta_paths()
 
     filt_start_time = time.time()
     run_filter_step(rosetta_scripts_bin_fn, database_path, working_dir)
     filt_run_time = time.time() - filt_start_time
-    # print("Filter step took {:.2f}".format(filt_run_time))
 
-    cent_start_time = time.time()
-    #run_centroid_step(score_jd2_bin_fn, database_path, working_dir)
-    cent_run_time = time.time() - cent_start_time
-    # print("Centroid step took {:.2f}".format(cent_run_time))
-
+    # # print("Filter step took {:.2f}".format(filt_run_time))
+    #
     pairwise_start_time = time.time()
     run_pairwise_step(score_pairwise_bin_fn, database_path, working_dir)
     pairwise_run_time = time.time() - pairwise_start_time
 
-    # keep track of how long it takes to run all steps
-    all_run_time = time.time() - all_start
+    run_times['pairwise'] = pairwise_run_time
+    run_times['filter'] =  filt_run_time
 
-    run_times = {"mutate": mt_run_time,
-                 "relax": rx_run_time,
-                 "filter": filt_run_time,
-                 "centroid": cent_run_time,
-                 "pairwise": pairwise_run_time,
-                 "all": all_run_time}
+
+    return run_times
+def run_relax_pipeline(working_dir: str):
+
+
+
+    # get the paths to the rosetta binaries and database
+    relax_bin_fn, rosetta_scripts_bin_fn,  score_jd2_bin_fn, score_pairwise_bin_fn, database_path = get_rosetta_paths()
+
+
+    # relax also needs to know whether the variant has mutations because it needs to either run relax
+    # around just the mutated residues or around the whole structure
+    rx_start_time = time.time()
+    run_relax_step(rosetta_scripts_bin_fn, database_path, working_dir)
+    rx_run_time = time.time() - rx_start_time
+    # print("Relax step took {:.2f}".format(rx_run_time))
+
+
+
+    run_times = { "relax": rx_run_time}
 
     return run_times
 
@@ -263,8 +220,7 @@ def parse_score_sc(score_sc_fn: str,
     """ parse the score.sc file from the energize run, aggregating energies and appending info about variant
         this function has also been co-opted to parse the centroid and filter score files, which should only
         have 1 possible record, so no need to do any agg (and it shouldn't) """
-    
-    # TODO: Do this in a cleaner fashion. Pairwise scoring doesn't have SEQUENCE: in the first line.
+
     with open(score_sc_fn, 'r') as inFile:
         first_line = inFile.readline().strip()
     if first_line == 'SEQUENCE:':
@@ -279,23 +235,39 @@ def parse_score_sc(score_sc_fn: str,
     # special case: only 1 structure was generated, no need to aggregate
     if len(score_df) == 1:
         parsed_df = score_df.iloc[[0]]
+        idx ='0001'
     else:
         if agg_method == "min_energy_avg":
             # select the structure(s) with the minimum total_score and average the energies if multiple structures
             # we average just in case there are some structures with the same min total_score but different energies
             min_score_df = score_df[score_df[sort_col] == score_df[sort_col].min()]
+
+            # lets just take the first of this min_score_df as our final index structure
+            idx = f"{min_score_df.index[0]+1:04d}"
+
             parsed_df = min_score_df.mean(axis=0).to_frame().T
+            # min
         elif agg_method == "min_energy_first":
             # select structures with min total_score and use the first one
             min_score_df = score_df[score_df[sort_col] == score_df[sort_col].min()]
+
             parsed_df = min_score_df.iloc[[0]]
+            idx = f"{parsed_df.index[0]+1:04d}"
+
+
+            # for min energy first, we do the index of the structure with the lowest energy
         elif agg_method == "avg":
             # take the average of all structures, not just the ones with the lowest score
             parsed_df = score_df.mean(axis=0).to_frame().T
+            # for index let's just do the first for average
+            idx = f"{parsed_df.index[0]+1:04d}"
+
+
         else:
             raise ValueError("invalid aggregation method: {}".format(agg_method))
 
-    return parsed_df
+    parsed_df = parsed_df.reset_index(drop=True)
+    return parsed_df,idx
 
 
 def parse_pairwise_score(score_sc_fn: str):
@@ -314,31 +286,33 @@ def parse_pairwise_score(score_sc_fn: str):
     
     return {k: csr_matrix(v) for k, v in mat.items()}
 
-def run_single_variant(rosetta_main_dir, pdb_fn, chain, variant, rosetta_hparams,
-                       staging_dir, output_dir, save_wd=False):
+def run_single_variant(pdb_fn, chain, variant, rosetta_hparams,
+                       staging_dir, output_dir, template_dir, save_wd=False):
     # grab the start time for this variant
     start_time = time.time()
 
-    template_dir = "templates/energize_pairwise_wd_template"
+    # template_dir = "templates/energize_pairwise_wd_template"
     # todo: use a variant-specific working directory in the output directory (safer)
     working_dir = "energize_pairwise_wd"
 
     # if the working directory exists from a previously failed variant, remove it before starting new variant
+    #
     if isdir(working_dir):
         shutil.rmtree(working_dir)
 
-    # set up the working directory (copies the pdb file, sets up the rosetta scripts, etc)
-    prep_working_dir(template_dir, working_dir, pdb_fn, chain, variant,
-                     rosetta_hparams["relax_distance"], rosetta_hparams["relax_repeats"], overwrite_wd=True)
+    chains = [chain.id for chain in return_pdb_chains(pdb_fn)]
+    # verify to make sure that this is a monomer
+    if len(chains)>1 or chains[0]!='A':
+        raise ValueError(f"The PDB provided contains multiple chains, this code only supports pdb with chain A, "
+                         f"found chains: {','.join(chains)}")
 
-    # run the mutate and relax steps
+    # # # set up the working directory (copies the pdb file, sets up the rosetta scripts, etc)
+    prep_working_dir(template_dir, working_dir, pdb_fn, chain, variant,rosetta_hparams, overwrite_wd=True)
+    #
+    # # run the mutate and relax steps
     variant_has_mutations = False if variant == "_wt" else True
-
-    run_times = run_rosetta_pipeline(rosetta_main_dir, working_dir,
-                                     rosetta_hparams["mutate_default_max_cycles"],
-                                     rosetta_hparams["relax_nstruct"],
-                                     rosetta_hparams["relax_repeats"],
-                                     variant_has_mutations)
+    #
+    run_times = run_relax_pipeline(working_dir)
 
     # copy over or parse any files we want to keep from the working directory to the output directory
     # the stdout and stderr outputs from rosetta are in the working directory under mutate.out and relax.out
@@ -346,33 +320,42 @@ def run_single_variant(rosetta_main_dir, pdb_fn, chain, variant, rosetta_hparams
 
     # parse the output files into a single-record csv, appending info about variant
     # place in a staging directory and combine with other variants that run during this job
-    score_df = parse_score_sc(join(working_dir, "relax.sc"))
-    filter_df = parse_score_sc(join(working_dir, "filter.sc"))
-    #centroid_df = parse_score_sc(join(working_dir, "centroid.sc"))
+
+    score_df,idx = parse_score_sc(join(working_dir, "relax.sc"),agg_method = "min_energy_avg",sort_col="total_score")
+
+
+
+    run_times=run_filter_pairwise_pipeline(working_dir,idx,run_times)
+    score_df=score_df.reset_index(drop=True)
+
+
+    filter_df,_ = parse_score_sc(join(working_dir, "filter.sc"))
 
     # the total_score from filter and centroid probably won't be used, but let's keep them in just in case
     # just need to resolve the name conflict with the total_score from score_df
     filter_df.rename(columns={"total_score": "filter_total_score"}, inplace=True)
-    #centroid_df.rename(columns={"total_score": "centroid_total_score"}, inplace=True)
 
     full_df = pd.concat((score_df, filter_df), axis=1)
+
+    run_times['all'] = time.time()-start_time
 
     # append info about this variant
     full_df.insert(0, "pdb_fn", [basename(pdb_fn)])
     full_df.insert(1, "variant", [variant])
     full_df.insert(2, "start_time", [time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(start_time))])
     full_df.insert(3, "run_time", [int(run_times["all"])])
-    full_df.insert(4, "mutate_run_time", [int(run_times["mutate"])])
-    full_df.insert(5, "relax_run_time", [int(run_times["relax"])])
-    full_df.insert(6, "filter_run_time", [int(run_times["filter"])])
-    full_df.insert(7, "centroid_run_time", [int(run_times["centroid"])])
-    full_df.insert(7, "pairwise_run_time", [int(run_times["pairwise"])])
+    full_df.insert(4, "relax_run_time", [int(run_times["relax"])])
+    full_df.insert(5, "filter_run_time", [int(run_times["filter"])])
+    full_df.insert(6, "pairwise_run_time", [int(run_times["pairwise"])])
 
     # note: it's not the best practice to have filenames with periods and commas
     #   could pass in the loop ID for this single variant and use that to save the file
     full_df.to_csv(join(staging_dir, "{}_{}_energies.csv".format(basename(pdb_fn), variant)), index=False)
 
     # Read and dump pairwise energies in working dir
+
+    # right now this only looks at the pairwise energies of the first output structure.
+    # we would have to change the code to allow for multiple structures.
     pairwise_energies = parse_pairwise_score(join(working_dir, "pairwise_scores.tbl"))
 
     write_pairwise_energies(join(output_dir, "pairwise_energies.h5"), basename(pdb_fn), variant, pairwise_energies)
@@ -384,6 +367,8 @@ def run_single_variant(rosetta_main_dir, pdb_fn, chain, variant, rosetta_hparams
 
     # clean up the working dir in preparation for next variant
     shutil.rmtree(working_dir)
+
+
 
     return run_times["all"]
 
@@ -462,10 +447,12 @@ def main(args):
     save_job_info(script_start, job_uuid, args.cluster, args.process, args.commit_id, log_dir)
 
     # create a dictionary of just rosetta hyperparameters that can be passed around throughout functions and saved
-    rosetta_hparams = {"mutate_default_max_cycles": args.mutate_default_max_cycles,
-                       "relax_distance": args.relax_distance,
+    rosetta_hparams = {"minimize_default_max_cycles": args.minimize_default_max_cycles,
                        "relax_repeats": args.relax_repeats,
-                       "relax_nstruct": args.relax_nstruct}
+                       "relax_nstruct": args.relax_nstruct,
+                       "relax_repack_distance":args.relax_repack_distance,
+                       "relax_minimize_distance":args.relax_minimize_distance
+                       }
     save_csv_from_dict(join(log_dir, "hparams.csv"), rosetta_hparams)
 
     # load the variants that will be processed with this run
@@ -498,8 +485,8 @@ def main(args):
             try:
                 print("Running Rosetta on variant {} {} ({}/{})".format(basename(pdb_fn), variant,
                                                                         i + 1, len(pdbs_variants)), flush=True)
-                run_time = run_single_variant(args.rosetta_main_dir, pdb_fn, args.chain, variant, rosetta_hparams, staging_dir,
-                                              log_dir, args.save_wd)
+                run_time = run_single_variant(pdb_fn, args.chain, variant, rosetta_hparams, staging_dir,
+                                              log_dir,args.template_dir, args.save_wd)
                 print("Processing variant {} {} took {:.2f}".format(basename(pdb_fn), variant, run_time), flush=True)
 
             except (RosettaError, FileNotFoundError) as e:
@@ -565,16 +552,19 @@ if __name__ == "__main__":
         fromfile_prefix_chars="@")
 
     # main input files
-    parser.add_argument("--rosetta_main_dir",
-                        help="path to the main directory of the rosetta distribution",
-                        type=str,
-                        default="rosetta_minimal")
 
     parser.add_argument("--variants_fn",
                         help="path to text file containing protein variants",
                         type=str)
 
+
     # todo: change to specifying the chain in the variants_fn file to support different chains in a single run
+
+    parser.add_argument("--template_dir",
+                        help="template directory containing the xml files and flags for this particular rosetta run"
+                             "(i.e. templates/energize_pairwise_wd_v6_cartesian)",
+                        type=str)
+
     parser.add_argument("--chain",
                         help="the chain to use from the pdb file",
                         type=str,
@@ -585,28 +575,38 @@ if __name__ == "__main__":
                         type=str,
                         default="pdb_files/prepared_pdb_files")
 
+
     parser.add_argument("--allowable_failure_fraction",
                         help="fraction of variants that can fail but still consider this job successful",
                         type=float,
                         default=0.25)
 
     # energize hyperparameters
-    parser.add_argument("--mutate_default_max_cycles",
-                        help="number of optimization cycles in the mutate step",
+    parser.add_argument("--minimize_default_max_cycles",
+                        help="number of optimization cycles in the minimization step (default in Rosetta is 2000)",
                         type=int,
-                        default=100)
+                        default=2000)
     parser.add_argument("--relax_repeats",
-                        help="number of FastRelax repeats in the relax step",
+                        help="number of FastRelax repeats in the relax step (default in rosetta is 5)"
+                             "[Every repeat has 5 mininimization/repack cycles]",
                         type=int,
-                        default=15)
+                        default=5)
+
     parser.add_argument("--relax_nstruct",
                         help="number of structures (restarts) in the relax step",
                         type=int,
                         default=1)
-    parser.add_argument("--relax_distance",
-                        help="distance threshold in angstroms for the residue selector in the relax step",
+    parser.add_argument("--relax_repack_distance",
+                        help="distance threshold for repacking sidechains from the mutated residues."
+                             "(default is 10,000 Å or to repack all sidechains)",
                         type=float,
-                        default=10.0)
+                        default=10000.0)
+
+    parser.add_argument("--relax_minimize_distance",
+                        help="distance threshold for minimizing backbone/sidechains from the mutated residues."
+                             "(default is 10,000 Å or to minimize all residues)",
+                        type=float,
+                        default=10000.0)
 
     # logging and output options
     parser.add_argument("--save_wd",

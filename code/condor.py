@@ -12,7 +12,6 @@ import argparse
 import shutil
 import subprocess
 import urllib.parse
-import tarfile
 # todo: tqdm is only on the local environment, not on condor environment
 #  shouldn't be a problem since this file isn't run during a condor run...
 from tqdm import tqdm
@@ -144,11 +143,12 @@ def fetch_repo(github_tag, github_token, out_dir):
     # https://stackoverflow.com/questions/17285464/whats-the-best-way-to-download-file-using-urllib3
     # https://stackoverflow.com/questions/27387783/how-to-download-a-file-with-urllib3
 
-    url = "https://github.com/gitter-lab/metl-sim/archive/{}.tar.gz".format(github_tag)
+    url = "https://github.com/arnav-s/metl-sim{}.tar.gz".format(github_tag)
 
     http = urllib3.PoolManager()
     # todo: when repo is public, authorization token will no longer be needed
-    response = http.request("GET", url, preload_content=False, headers={"Authorization": "token {}".format(github_token)})
+    response = http.request("GET", url, preload_content=False)
+    # , headers={"Authorization": "token {}".format(github_token)})
 
     # save_fn = join(out_dir, "{}.tar.gz".format(github_tag))
     # use static output filename to make transfer/unzipping easier (less need to fill in github_tag everywhere)
@@ -171,39 +171,6 @@ def load_lines(fn):
     return lines
 
 
-def check_pass_file(pass_fn="htcondor/templates/pass.txt"):
-    """ check if the pass.txt file is still using the default password """
-
-    # load the contents
-    with open(pass_fn, "r") as f:
-        pass_contents = f.read().strip()
-
-    if pass_contents == "password":
-        warnings.warn("The pass.txt file is still using the default password. "
-                      "Please change the password in pass.txt to the one you used to encrypt Rosetta.")
-
-
-def create_custom_tar(exclude_dirs, output_name, root_dir_name):
-    """
-    Create a tar archive of all files and directories in the current directory,
-    excluding specified directories, and with a custom root name when extracted.
-
-    Parameters:
-    - exclude_dirs (list of str): Names of directories to exclude from the tar.
-    - output_name (str): Name of the output tar file.
-    - root_dir_name (str): The name to give the root directory in the tar archive.
-    """
-    with tarfile.open(output_name, "w:gz") as tar:
-        for item in os.listdir('.'):
-            # Skip excluded directories
-            if item in exclude_dirs:
-                continue
-            # Add each item to the archive with the specified root directory name
-            tar.add(item, arcname=os.path.join(root_dir_name, item))
-            print(f"Added {item} to {output_name} under root {root_dir_name}")
-    
-    print(f"Tar file '{output_name}' created successfully with root '{root_dir_name}', excluding {exclude_dirs}.")
-
 
 def prep_energize(args):
     """
@@ -215,12 +182,14 @@ def prep_energize(args):
         pyscript = "energize.py"
     elif args.run_type == "energize_docking":
         pyscript = "gb1_docking.py"
-    elif args.run_type == "energize_pairwise":
+    elif args.run_type == "rosetta_ligand_sadA":
+        pyscript = "sadA_rosetta_ligand.py"
+    elif args.run_type =="energize_pairwise":
         pyscript = "energize_pairwise.py"
     else:
         raise ValueError("Invalid run type: {}".format(args.run_type))
 
-    out_dir = join("output", "htcondor_runs", get_run_dir_name(args.run_name))
+    out_dir = join(args.out_dir, get_run_dir_name(args.run_name))
     os.makedirs(out_dir)
 
     # save the arguments for this condor run as run_def.txt in the log directory
@@ -230,17 +199,7 @@ def prep_energize(args):
     save_argparse_args(args_dict, join(out_dir, "run_def.txt"))
 
     # download the repository
-    if args.github_tag=='source_local':
-        # Specify the directories to exclude and the name of the output tar file
-        exclude_dirs = ['notebooks', 'output']
-        output_name = f'{out_dir}{os.sep}code.tar.gz'
-        root_dir_name = 'metl-sim-source_local'
-    
-        # Create the tar file
-        create_custom_tar(exclude_dirs, output_name, root_dir_name)
-                
-    else: 
-        fetch_repo(args.github_tag, args.github_token, out_dir)
+    fetch_repo(args.github_tag, args.github_token, out_dir)
 
     # generate arguments files from the master variant list. returns the number of jobs
     # also generates a file containing the filenames of the separate variant lists (for condor queue)
@@ -254,19 +213,10 @@ def prep_energize(args):
         f.write("export PYSCRIPT={}\n".format(pyscript))
 
     # prepare the additional data files
-    if args.use_additional_data_as_is:
-        additional_files = args.additional_data_files
-    else:
-        additional_files = prep_additional_data_files(
-            args.additional_data_files,
-            out_dir,
-            args.additional_data_dir
-        )
+    additional_files = prep_additional_data_files(args.additional_data_files, out_dir, args.additional_data_dir)
 
     # fill in the template and save it
     fill_submit_template(template_fn="htcondor/templates/energize.sub",
-                         osdf_python_distribution=args.osdf_python_distribution,
-                         osdf_rosetta_distribution=args.osdf_rosetta_distribution,
                          additional_data_files=additional_files,
                          save_dir=out_dir)
 
@@ -274,12 +224,6 @@ def prep_energize(args):
     # shutil.copy("htcondor/templates/energize.sub", out_dir)
     shutil.copy("htcondor/templates/run.sh", out_dir)
 
-    if args.rosetta_decryption_password is not None:
-        with open(join(out_dir, "pass.txt"), "w") as f:
-            f.write(args.rosetta_decryption_password)
-    else:
-        check_pass_file("htcondor/templates/pass.txt")
-        shutil.copy("htcondor/templates/pass.txt", out_dir)
 
     # copy over energize args and rename to standard filename
     shutil.copyfile(args.energize_args_fn, join(out_dir, "energize_args.txt"))
@@ -290,8 +234,6 @@ def prep_energize(args):
 
 
 def fill_submit_template(template_fn: str,
-                         osdf_python_distribution: Optional[str],
-                         osdf_rosetta_distribution: Optional[str],
                          additional_data_files: Optional[list[str]],
                          save_dir: str):
 
@@ -299,23 +241,6 @@ def fill_submit_template(template_fn: str,
     template_str = "\n".join(template_lines)
 
     format_dict = {}
-
-    if "{osdf_python_distribution}" in template_str:
-        if osdf_python_distribution is not None:
-            # load the osdf python distribution files into a list
-            osdf_python_distribution_lines = load_lines(osdf_python_distribution)
-            # fill in the template with the osdf python distribution
-            format_dict["osdf_python_distribution"] = ", ".join(osdf_python_distribution_lines)
-        else:
-            format_dict["osdf_python_distribution"] = ""
-
-    # same for Rosetta distribution
-    if "{osdf_rosetta_distribution}" in template_str:
-        if osdf_rosetta_distribution is not None:
-            osdf_rosetta_distribution_lines = load_lines(osdf_rosetta_distribution)
-            format_dict["osdf_rosetta_distribution"] = ", ".join(osdf_rosetta_distribution_lines)
-        else:
-            format_dict["osdf_rosetta_distribution"] = ""
 
     if additional_data_files is None:
         # if there are no additional data files, make it an empty list
@@ -355,21 +280,12 @@ def prep_prepare(args):
 
     # fill in the template and save it
     fill_submit_template(template_fn="htcondor/templates/prepare.sub",
-                         osdf_python_distribution=args.osdf_python_distribution,
-                         osdf_rosetta_distribution=args.osdf_rosetta_distribution,
                          additional_data_files=additional_files,
                          save_dir=out_dir)
 
     # copy over energize.sub and run.sh
     # shutil.copy("htcondor/templates/prepare.sub", out_dir)
     shutil.copy("htcondor/templates/run_prepare.sh", out_dir)
-
-    if args.rosetta_decryption_password is not None:
-        with open(join(out_dir, "pass.txt"), "w") as f:
-            f.write(args.rosetta_decryption_password)
-    else:
-        check_pass_file("htcondor/templates/pass.txt")
-        shutil.copy("htcondor/templates/pass.txt", out_dir)
 
     # copy over the pdb list (passed in as master_variant_fn)
     shutil.copyfile(args.master_variant_fn[0], join(out_dir, "pdb_list.txt"))
@@ -432,11 +348,7 @@ def zip_additional_data(data_fns):
     return out_fn
 
 
-def prep_additional_data_files(
-        additional_data_files,
-        run_dir,
-        additional_data_dir,
-):
+def prep_additional_data_files(additional_data_files, run_dir, additional_data_dir):
     """ parses additional data files to determine what is coming from squid and
         what needs to be copied to submit file or zipped up and copied to submit file """
 
@@ -487,7 +399,7 @@ def prep_additional_data_files(
 
 
 def main(args):
-    if args.run_type in ["energize", "energize_docking", "energize_pairwise"]:
+    if args.run_type in ["energize", "energize_docking",'rosetta_ligand_sadA','energize_pairwise']:
         prep_energize(args)
     elif args.run_type == "prepare":
         prep_prepare(args)
@@ -503,7 +415,8 @@ if __name__ == "__main__":
                         help="prepare or energize",
                         type=str,
                         default="energize",
-                        choices=["prepare", "energize", "energize_pairwise", "energize_docking"])
+                        choices=["prepare", "energize", "energize_pairwise",
+                                 'rosetta_ligand_sadA'])
 
     parser.add_argument("--run_name",
                         help="name for this condor run, used for log directory",
@@ -524,20 +437,6 @@ if __name__ == "__main__":
                         type=int,
                         help="the number of variants per job")
 
-    parser.add_argument("--osdf_python_distribution",
-                        type=str,
-                        help="text file containing the OSDF paths to Python distribution files",
-                        default=None)
-
-    parser.add_argument("--osdf_rosetta_distribution",
-                        type=str,
-                        help="text file containing the OSDF paths to Rosetta distribution files",
-                        default=None)
-
-    parser.add_argument("--rosetta_decryption_password",
-                        type=str,
-                        help="password to decrypt Rosetta files (will use pass.txt from templates directory if not provided)",
-                        default=None)
 
     parser.add_argument("--additional_data_files",
                         type=str,
@@ -551,10 +450,6 @@ if __name__ == "__main__":
                              "when additional_data_files are present and need to be transferred to storage "
                              "server due to the file size being too big")
 
-    parser.add_argument("--use_additional_data_as_is",
-                        action="store_true",
-                        help="use additional data files as is, don't zip them up or split them")
-
     parser.add_argument("--github_tag",
                         type=str,
                         help="github tag specifying which version of code to retrieve for this run")
@@ -562,5 +457,10 @@ if __name__ == "__main__":
     parser.add_argument("--github_token",
                         type=str,
                         help="authorization token for private metl-sim repository")
+
+    parser.add_argument("--out_dir",
+                        type=str,
+                        help="out dir for the condor run",
+                        default="output/htcondor_runs")
 
     main(parser.parse_args())

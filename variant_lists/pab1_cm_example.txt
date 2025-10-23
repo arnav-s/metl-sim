@@ -1,0 +1,2 @@
+pab1_cm.pdb _wt
+pab1_cm.pdb L55A
