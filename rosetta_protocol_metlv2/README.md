@@ -495,18 +495,18 @@ docker run -it -v /path/to/metl-sim:/rosetta arnvsharma/metl-sim:latest /bin/bas
 
 ```angular2html
 root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example.txt
-Running Rosetta on variant pab1_cm.pdb _wt (1/2)
-Processing variant pab1_cm.pdb _wt took 187.46
-Running Rosetta on variant pab1_cm.pdb L55A (2/2)
-Processing variant pab1_cm.pdb L55A took 178.67
-rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-23_18-06-56_B7MSBi4dwFGm/pairwise_energies.h5
+Running Rosetta on variant pab1_cm.pdb _wt (1/3)
+Processing variant pab1_cm.pdb _wt took 191.82
+Running Rosetta on variant pab1_cm.pdb L55A (2/3)
+Processing variant pab1_cm.pdb L55A took 182.17
+Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
+Processing variant pab1_cm.pdb L55A,G25W took 193.27
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-23_19-01-25_9cCJs7Rx7iG5/pairwise_energies.h5
 
-real    6m7.063s
-user    6m7.236s
-sys     0m2.585s
+real    9m28.350s
+user    9m28.057s
+sys     0m2.951s
 ```
-
-
 
 Relax Run time: 150 seconds 
 
@@ -519,7 +519,10 @@ Filter run time: 27 seconds
 The reason why it took so long was because I did two nstructs (so relax run time times 2) to test out  the functionality of the pairwise scoring and filter 
 scores. Since these require different scoring, etc. 
 
-This will output all the files and documents to `rosetta_protocol_metlv2/output/energize_outputs` . 
+This will output all the files and documents to `rosetta_protocol_metlv2/output/energize_outputs` .
+
+
+## Example run with CHTC 
 
 Example run with CHTC for PR consistency (but may change if Arnav has different submission framework): 
 
@@ -529,20 +532,23 @@ python code/condor.py @htcondor/run_defs/pab1_example_run_v2.txt
 ```
 
 ## Non- Cartesian Run
-Now with non cartesian, same run. Keep in mind this is with full minimization, so this fast of a relax run time is great! 
-This leads to the idea, we should have some higher cutoff for the minimization distance.
+Now with non cartesian, same run. Keep in mind this is with full minimization and 2 nstructs, so this Fast of a  FastRelax run time is great! 
+This leads to the idea, we should have some higher cutoff for the minimization distance, than for the repacking.
 
 ```angular2html
 root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart.txt
-Running Rosetta on variant pab1_cm.pdb _wt (1/2)
-Processing variant pab1_cm.pdb _wt took 58.42
-Running Rosetta on variant pab1_cm.pdb L55A (2/2)
-Processing variant pab1_cm.pdb L55A took 50.48
-rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-23_18-37-05_jwB2t5MB6wB9/pairwise_energies.h5
+Running Rosetta on variant pab1_cm.pdb _wt (1/3)
+Processing variant pab1_cm.pdb _wt took 58.56
+Running Rosetta on variant pab1_cm.pdb L55A (2/3)
+Processing variant pab1_cm.pdb L55A took 51.05
+Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
+Processing variant pab1_cm.pdb L55A,G25W took 53.42
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-23_18-51-23_JGg7q22zTUd7/pairwise_energies.h5
 
-real    1m49.858s
-user    1m50.130s
-sys     0m2.522s
+real    2m44.016s
+user    2m43.952s
+sys     0m2.783s
+
 ```
 
 Relax Run time: 25 seconds 
@@ -551,9 +557,32 @@ Pairwise Evaluation: 2 seconds
 
 Filter run time: 26 seconds
 
+
 We will need to decide if we want to do a filter or not, its runtime is non-negligible.
 
 
+
+## Job calculation
+
+Hypothetically let's say that we say 30-40 angstroms is the cutoff for the backbone distance. That way this 
+simulation doesn't scale by length.
+
+Arnav calculated their were 4,000,000,000 variants he would like us to calculate. 
+
+At 30 seconds per variant for a max 6 hour job that is roughly 750 variants we can submit (30*750/(3600)  =6.25) . 
+
+4,000,000,000/750/3 ~ 2 million jobs per person to submit , which is a lot. But very doable, I submitted 80k 
+jobs in a week. 
+
+2000000/80,000=25 weeks 
+
+So this is going to take ~6 months. 
+
+
+- Out of curiosity what is our emissions from all this? 
+    - https://www.climatiq.io/data/emission-factor/e8fc4ce0-8013-48ea-a86c-c40f73bf1da9 
+            * 4,000,000,000*30/(3600)*0.00098387 ‎ = 32,795.667 kg CO2 , which is 33 metric tons, or about the emissions of 7-8 cars on the road per year 
+            * I don’t know about you guys but I was expecting more… 
 
 
 
