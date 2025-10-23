@@ -9,4 +9,4 @@ variant_lists/pab1_cm_example.txt
 --variants_per_job
 3
 --github_tag
-2475a21b4b366643ec2bbecb0dcaf388cc0f462e
+95142db9ccd3a24d1194fd506ae781cccb33ed48
