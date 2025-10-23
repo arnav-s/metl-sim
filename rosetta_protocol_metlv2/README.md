@@ -509,8 +509,11 @@ sys     0m2.585s
 
 
 Relax Run time: 150 seconds 
+
 Pairwise Evaluation: 2 seconds
+
 Filter run time: 27 seconds 
+
 
 
 The reason why it took so long was because I did two nstructs (so relax run time times 2) to test out  the functionality of the pairwise scoring and filter 
@@ -526,7 +529,8 @@ python code/condor.py @htcondor/run_defs/pab1_example_run_v2.txt
 ```
 
 ## Non- Cartesian Run
-Now with non cartesian, same run
+Now with non cartesian, same run. Keep in mind this is with full minimization, so this fast of a relax run time is great! 
+This leads to the idea, we should have some higher cutoff for the minimization distance.
 
 ```angular2html
 root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart.txt
@@ -542,7 +546,9 @@ sys     0m2.522s
 ```
 
 Relax Run time: 25 seconds 
+
 Pairwise Evaluation: 2 seconds
+
 Filter run time: 26 seconds
 
 We will need to decide if we want to do a filter or not, its runtime is non-negligible.

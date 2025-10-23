@@ -1,2 +1,3 @@
 pab1_cm.pdb _wt
 pab1_cm.pdb L55A
+pab1_cm.pdb L55A,G25W
