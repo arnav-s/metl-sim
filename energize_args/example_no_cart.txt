@@ -1,7 +1,7 @@
 --variants_fn
 variant_lists/pab1_cm_example.txt
 --template_dir
-templates/energize_pairwise_wd_v6_cartesian
+templates/energize_pairwise_wd_v6_no_cart
 --chain
 A
 --minimize_default_max_cycles

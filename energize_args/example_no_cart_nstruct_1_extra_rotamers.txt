@@ -1,7 +1,7 @@
 --variants_fn
 variant_lists/pab1_cm_example.txt
 --template_dir
-templates/energize_pairwise_wd_v6_cartesian
+templates/energize_pairwise_wd_v6_no_cart
 --chain
 A
 --minimize_default_max_cycles
@@ -9,9 +9,13 @@ A
 --relax_repeats
 5
 --relax_nstruct
-2
+1
 --relax_repack_distance
 10000
 --relax_minimize_distance
 10000
 --save_wd
+--relax_additional_flags
+ex1
+ex2
+use_input_sc
