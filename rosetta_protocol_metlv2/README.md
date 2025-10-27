@@ -504,8 +504,6 @@ We can mess with at end. But most likely any improvements to one PC could be ano
 
 
 
-
-
 ## Checking `code/prepare.py`
 
 OUTDATED DUE TO CHANGING RAMPING CONSTRAINT FLAGS, IT DOESN'T MATTER THOUGH THIS WAS JUST
@@ -570,7 +568,7 @@ Found 1 structures with lowest energy (-252.824).
 ```
 
 
-## energize_pairwise.py
+## Checking energize_pairwise.py
 
 
 This is the new rosetta protocol and the accompanying changes to the submission framework to meet that protocol. Now many rosetta hyperparameters can now be changed from the command line. Additionally, an in depth analysis of the rosetta protocol and what its outputs constitute was done in /rosetta_protocol_metlv2 . Updates were also done to the condor submission framework (but unclear if we will use for the future studies.) 
@@ -593,17 +591,19 @@ docker run -it -v /path/to/metl-sim:/rosetta arnvsharma/metl-sim:latest /bin/bas
 ```angular2html
 root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example.txt
 Running Rosetta on variant pab1_cm.pdb _wt (1/3)
-Processing variant pab1_cm.pdb _wt took 191.82
+Processing variant pab1_cm.pdb _wt took 180.19
 Running Rosetta on variant pab1_cm.pdb L55A (2/3)
-Processing variant pab1_cm.pdb L55A took 182.17
+Processing variant pab1_cm.pdb L55A took 179.63
 Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
-Processing variant pab1_cm.pdb L55A,G25W took 193.27
-rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-23_19-01-25_9cCJs7Rx7iG5/pairwise_energies.h5
+Processing variant pab1_cm.pdb L55A,G25W took 190.68
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-27_00-44-55_LNKZTDa4KwY3/pairwise_energies.h5
 
-real    9m28.350s
-user    9m28.057s
-sys     0m2.951s
+real    9m11.453s
+user    9m11.373s
+sys     0m2.750s
 ```
+
+#todo - check 
 
 Relax Run time: 150 seconds 
 
@@ -619,17 +619,6 @@ scores. Since these require different scoring, etc.
 This will output all the files and documents to `rosetta_protocol_metlv2/output/energize_outputs` .
 
 
-
-
-## Example run with CHTC 
-
-Example run with CHTC for PR consistency (but may change if Arnav has different submission framework): 
-
-
-```angular2html
-python code/condor.py @htcondor/run_defs/pab1_example_run_v2.txt
-```
-
 ## Non- Cartesian Run
 Now with non cartesian, same run. Keep in mind this is with full minimization and 2 nstructs, so this Fast of a  FastRelax run time is great! 
 This leads to the idea, we should have some higher cutoff for the minimization distance, than for the repacking.
@@ -637,18 +626,20 @@ This leads to the idea, we should have some higher cutoff for the minimization d
 ```angular2html
 root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart.txt
 Running Rosetta on variant pab1_cm.pdb _wt (1/3)
-Processing variant pab1_cm.pdb _wt took 58.56
+Processing variant pab1_cm.pdb _wt took 57.75
 Running Rosetta on variant pab1_cm.pdb L55A (2/3)
-Processing variant pab1_cm.pdb L55A took 51.05
+Processing variant pab1_cm.pdb L55A took 59.41
 Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
-Processing variant pab1_cm.pdb L55A,G25W took 53.42
-rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-23_18-51-23_JGg7q22zTUd7/pairwise_energies.h5
+Processing variant pab1_cm.pdb L55A,G25W took 59.43
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-27_00-56-00_byqvzz4mffq9/pairwise_energies.h5
 
-real    2m44.016s
-user    2m43.952s
-sys     0m2.783s
-
+real    2m57.571s
+user    2m57.553s
+sys     0m2.746s
 ```
+
+
+# todo-- check 
 
 Relax Run time: 25 seconds 
 
@@ -665,18 +656,19 @@ We will need to decide if we want to do a filter or not, its runtime is non-negl
 Looking at  nstruct 1 (same params as above - I didn't make a new arg txt file for this, look to output files):
 
 ```angular2html
-root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart.txt
+root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart_nstruct_1.txt
 Running Rosetta on variant pab1_cm.pdb _wt (1/3)
-Processing variant pab1_cm.pdb _wt took 44.74
+Processing variant pab1_cm.pdb _wt took 46.15
 Running Rosetta on variant pab1_cm.pdb L55A (2/3)
-Processing variant pab1_cm.pdb L55A took 41.26
+Processing variant pab1_cm.pdb L55A took 47.24
 Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
-Processing variant pab1_cm.pdb L55A,G25W took 42.08
-rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-23_19-36-39_YCGARwe9VxVw/pairwise_energies.h5
+Processing variant pab1_cm.pdb L55A,G25W took 47.78
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-27_00-59-52_dTiUEowMA6Ue/pairwise_energies.h5
 
-real    2m9.090s
-user    2m8.950s
-sys     0m2.876s
+real    2m22.167s
+user    2m22.176s
+sys     0m2.711s
+
 ```
 
 So we are running approx 15 seconds faster. Wow, a 15 second simulation would be awesome. 
@@ -686,19 +678,40 @@ Reducing minimization cycles doesn't seem to do much. Telling me its already con
 true of all proteins though.)
 
 ```angular2html
-root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart.txt
+root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart_nstruct_1_200_max_cycles.txt
 Running Rosetta on variant pab1_cm.pdb _wt (1/3)
-Processing variant pab1_cm.pdb _wt took 44.86
+Processing variant pab1_cm.pdb _wt took 47.48
 Running Rosetta on variant pab1_cm.pdb L55A (2/3)
-Processing variant pab1_cm.pdb L55A took 42.35
+Processing variant pab1_cm.pdb L55A took 46.51
 Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
-Processing variant pab1_cm.pdb L55A,G25W took 43.54
-rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-23_19-39-55_7wYH4emYTZ4p/pairwise_energies.h5
+Processing variant pab1_cm.pdb L55A,G25W took 46.77
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-27_01-02-42_7uKhECAUYdpm/pairwise_energies.h5
 
-real    2m11.721s
-user    2m11.760s
-sys     0m2.687s
+real    2m21.808s
+user    2m21.863s
+sys     0m2.669s
 ```
+
+
+
+Finally we will test how timing is effected by adding in extra rotamers.
+As expected it increases runtimes a lot. 
+
+
+
+
+
+
+## Example run with CHTC 
+
+Example run with CHTC for PR consistency (but may change if Arnav has different submission framework): 
+
+
+```angular2html
+python code/condor.py @htcondor/run_defs/pab1_example_run_v2.txt
+```
+
+
 
 
 

@@ -1,4 +1,0 @@
--s structure_{idx_placeholder}.pdb
--score:weights beta_nov16
--beta_nov16
--out:file:silent pairwise_scores.tbl

@@ -11,7 +11,7 @@ A
 --relax_nstruct
 2
 --relax_repack_distance
-10
+10000
 --relax_minimize_distance
 10000
 --log_dir_base

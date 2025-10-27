@@ -44,7 +44,7 @@
     <FastRelax name="relax"
                scorefxn="beta_sf"
                disable_design="true"
-               task_operations="repack_res,no_repack"
+               task_operations="init,repack_res,no_repack"
                cartesian="true"
                repeats="{relax_repeats}"
                movemap_factory="local_mm"/>
