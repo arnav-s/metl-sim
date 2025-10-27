@@ -36,6 +36,12 @@ Add flag to stop ignorning weight from xml script, from `ref2015` weights to `be
     - `flags_relax_restrict_backbone_1000`- Fixed protocol with 1000 (basically no) angstrom backbone restriction in cartesian space. 
     - `flags_relax_restrict_backbone_1000_no_cart` -Fixed protocol with 1000 (basically no) angstrom backbone restriction in non-cartesian space. 
 
+>Note: If you are looking at the output from two different protocols, even if they are supposed to produce the same
+> output in pymol, use must still run a structural alignment in pymol using 
+> 
+> ```align <structure1>,<structure2> ```
+> 
+> Otherwise pymol may interpret their coordinate systems differently.
 
 ## Recommendations
 
@@ -190,8 +196,6 @@ sys     0m0.081s
 ```
 Looking at the output structures we see it does look to move substantially more in non cartesian space. Perhaps due
 to more degrees of freedom:
-
-<img src="images/structure_vs_no_cart_vs_cart_relax_v3.png" alt="Diagram" width="400">
 
 - Green, Starting pab1 structure.
 - Red, No cartesian minimization of fixed relax protocol 
@@ -403,9 +407,99 @@ protocols.relax.FastRelax: CMD: scale:fa_rep  -207.001  0.289991  0.289991  0.14
 |--------------------------|------------------------|-------------------------------------------------------------------------------|-----------|
 | 10                       | True                   | -181.417                                                                      | 24.709s   |
 | 10                       | False                  | -213.509                                                                      | 9.026s    |
-| 1000                     | True                   |    -232.386                                                                             | 2m19.875s |
+| 1000                     | True                   |    -232.386                                                                            | 2m19.875s |
 | 1000                     | False                  |     -248.106                                                                              |  18.680s         |
 
+
+If you run cartesian at 1000, for with the repack at 1000 also, you get a total score which is congruent with the 
+table above, since the above doesn't match. So that tells me that sidechain repacking is important for cartesian minization. 
+
+
+
+## Scoring the Input Structure
+
+This is such a basic thing. And rather embarrissing I didn't do it sooner, but to make sure 
+that these structures are actually relaxed, I should score the pose as is.
+
+Non-Cartesian 
+```angular2html
+ score_jd2  -in:file:s structure.pdb   -score:weights beta_nov16 -database /usr/local/database -out:file:scorefile pose_beta_nov16.sc -beta_nov16 > pose_beta_nov16.log   2>&1 
+# total_score 
+-212.748 
+```
+
+Cartesian 
+```angular2html
+ score_jd2  -in:file:s structure.pdb   -score:weights beta_nov16_cart -database /usr/local/database -out:file:scorefile pose_beta_nov16_cart.sc -beta_nov16_cart > pose_beta_nov16_cart.log   2>&1
+# total_score   
+-177.736 
+```
+
+Both of these values are much higher than the relaxed values we are finding. So that is a exciting 
+
+
+
+
+## Adding extra flags
+
+In order to use these parameters from the command line, with TaskOperations, we must
+include the object `<InitializeFromCommandline name="init"/>` in the `<TASKOPERATIONS>`. 
+
+I tested the runtimes including these objects in `<TASKOPERATIONS>` as opposed to 
+from initializing from the command line, which is preferable. The runtimes were negligible.
+Simply add these to a script and remove the -ex1,-ex2, and -use_input_sc from a flags to 
+show this is true. 
+
+```angular2html
+<IncludeCurrent name="ic"/>
+<ExtraRotamersGeneric name="exrot" ex1="1" ex2="1"/>
+```
+
+Now, these flags, add in rotamers, specifically `ex1,ex2` (extra rotamers), and `-use_input_sc` 
+(keep the input rotamer found during the initial pose.)
+```angular2html
+-ex1
+-ex2
+-use_input_sc
+```
+
+I will first add the extra rotamers, then add int he linmem_ig 10 to see how it impacts the solution. 
+I will do this using all repacking rotamers, so the timing differences are more amplified.
+
+
+First no flags: 
+```angular2html
+root@0230b73b01e4:/rosetta/rosetta_protocol_metlv2# time rosetta_scripts @flags_relax_v6_no_cart > flags_relax_v6_no_cart.log 2>&1
+
+real    0m28.656s
+user    0m28.453s
+sys     0m0.188s
+
+```
+
+Now with flags: 
+```angular2html
+root@0230b73b01e4:/rosetta/rosetta_protocol_metlv2# time rosetta_scripts @flags_relax_v6_no_cart_flags > flags_relax_v6_no_cart_flags.log 2>&1
+
+real    0m51.891s
+user    0m51.803s
+sys     0m0.074s
+
+```
+
+Confirmation, almost double the amount of rotamers are considered: 
+```
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 1906 rotamers at 75 positions.
+```
+
+So flags almost doubles the time that is required, or adds about +20 seconds for this run. 
+That is pretty significant, and the structure didn't find a lower energy structure. 
+If you look at the `total_score` of those runs.
+
+When considering `linmem_ig 10` (which I did but don't show here), it shows that the results are highly PC
+dependent. So its very unclear which parameter is best for optimize since it optimizes for memory requests, etc. 
+We can mess with at end. But most likely any improvements to one PC could be another's detriment. 
 
 
 
@@ -413,6 +507,10 @@ protocols.relax.FastRelax: CMD: scale:fa_rep  -207.001  0.289991  0.289991  0.14
 
 
 ## Checking `code/prepare.py`
+
+OUTDATED DUE TO CHANGING RAMPING CONSTRAINT FLAGS, IT DOESN'T MATTER THOUGH THIS WAS JUST
+A PROOF OF CONCEPT. 
+
 
 The two flags can turn off the cartesian minimization `--no_cart` and ramping constrainsts 
 for the prepare `--no_ramping_constraints`. 
@@ -472,7 +570,6 @@ Found 1 structures with lowest energy (-252.824).
 ```
 
 
-
 ## energize_pairwise.py
 
 
@@ -522,6 +619,8 @@ scores. Since these require different scoring, etc.
 This will output all the files and documents to `rosetta_protocol_metlv2/output/energize_outputs` .
 
 
+
+
 ## Example run with CHTC 
 
 Example run with CHTC for PR consistency (but may change if Arnav has different submission framework): 
@@ -562,6 +661,51 @@ We will need to decide if we want to do a filter or not, its runtime is non-negl
 
 
 
+
+Looking at  nstruct 1 (same params as above - I didn't make a new arg txt file for this, look to output files):
+
+```angular2html
+root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart.txt
+Running Rosetta on variant pab1_cm.pdb _wt (1/3)
+Processing variant pab1_cm.pdb _wt took 44.74
+Running Rosetta on variant pab1_cm.pdb L55A (2/3)
+Processing variant pab1_cm.pdb L55A took 41.26
+Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
+Processing variant pab1_cm.pdb L55A,G25W took 42.08
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-23_19-36-39_YCGARwe9VxVw/pairwise_energies.h5
+
+real    2m9.090s
+user    2m8.950s
+sys     0m2.876s
+```
+
+So we are running approx 15 seconds faster. Wow, a 15 second simulation would be awesome. 
+
+
+Reducing minimization cycles doesn't seem to do much. Telling me its already converging before 200 (might not be
+true of all proteins though.)
+
+```angular2html
+root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart.txt
+Running Rosetta on variant pab1_cm.pdb _wt (1/3)
+Processing variant pab1_cm.pdb _wt took 44.86
+Running Rosetta on variant pab1_cm.pdb L55A (2/3)
+Processing variant pab1_cm.pdb L55A took 42.35
+Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
+Processing variant pab1_cm.pdb L55A,G25W took 43.54
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-23_19-39-55_7wYH4emYTZ4p/pairwise_energies.h5
+
+real    2m11.721s
+user    2m11.760s
+sys     0m2.687s
+```
+
+
+
+
+
+
+
 ## Job calculation
 
 Hypothetically let's say that we say 30-40 angstroms is the cutoff for the backbone distance. That way this 
@@ -569,19 +713,19 @@ simulation doesn't scale by length.
 
 Arnav calculated their were 4,000,000,000 variants he would like us to calculate. 
 
-At 30 seconds per variant for a max 6 hour job that is roughly 750 variants we can submit (30*750/(3600)  =6.25) . 
+At 15 seconds per variant for a max 6 hour job that is roughly 1500 variants we can submit (30*1500/(3600)  =6.25) . 
 
-4,000,000,000/750/3 ~ 2 million jobs per person to submit , which is a lot. But very doable, I submitted 80k 
+4,000,000,000/1500/(2 to 3 people) ~ 800k-1300k jobs per person to submit , which is a lot. But very doable, I submitted 80k 
 jobs in a week. 
 
-2000000/80,000=25 weeks 
+800k/80,000=10 weeks 
 
 So this is going to take ~6 months. 
 
 
 - Out of curiosity what is our emissions from all this? 
     - https://www.climatiq.io/data/emission-factor/e8fc4ce0-8013-48ea-a86c-c40f73bf1da9 
-            * 4,000,000,000*30/(3600)*0.00098387 ‎ = 32,795.667 kg CO2 , which is 33 metric tons, or about the emissions of 7-8 cars on the road per year 
+            * 4,000,000,000*12/(3600)*0.00098387 ‎ = 13kg CO2 , which is 13 metric tons, or about the emissions of 3-5 cars on the road per year 
             * I don’t know about you guys but I was expecting more… 
 
 

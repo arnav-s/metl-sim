@@ -6,3 +6,4 @@
 -optimization
     -default_max_cycles {minimize_default_max_cycles}
 -out:file:scorefile relax.sc
+{flags_placeholder}

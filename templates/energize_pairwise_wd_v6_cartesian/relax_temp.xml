@@ -16,6 +16,8 @@
 
 
   <TASKOPERATIONS>
+    <InitializeFromCommandline name="init"/>
+
     <OperateOnResidueSubset name="repack_res" selector="surrounding_repack">
       <RestrictToRepackingRLT/>
     </OperateOnResidueSubset>

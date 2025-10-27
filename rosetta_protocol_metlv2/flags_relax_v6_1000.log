@@ -4,9 +4,9 @@
 core.init: Checking for fconfig files in pwd and ./rosetta/flags 
 core.init: Rosetta version: 2025.37+HEAD.df75a9c48e df75a9c48e763e52a7aa3f5dfba077f4da88dbf5 https://github.com/RosettaCommons/rosetta.git 2025-09-03T12:23:30
 core.init: Rosetta extras: []
-core.init: command: rosetta_scripts @flags_relax_v6_1000
-basic.random.init_random_generator: 'RNG device' seed mode, using '/dev/urandom', seed=610461353 seed_offset=0 real_seed=610461353
-basic.random.init_random_generator: RandomGenerator:init: Normal mode, seed=610461353 RG_type=mt19937
+core.init: command: rosetta_scripts @flags_relax_v6_1000 -overwrite
+basic.random.init_random_generator: 'RNG device' seed mode, using '/dev/urandom', seed=-1437675745 seed_offset=0 real_seed=-1437675745
+basic.random.init_random_generator: RandomGenerator:init: Normal mode, seed=-1437675745 RG_type=mt19937
 core.init: found database environment variable ROSETTA3_DB: /usr/local/database
 protocols.jd2.PDBJobInputter: Instantiate PDBJobInputter
 protocols.jd2.PDBJobInputter: PDBJobInputter::fill_jobs
@@ -15,7 +15,7 @@ protocols.evaluation.ChiWellRmsdEvaluatorCreator: Evaluation Creator active ...
 protocols.jd2.PDBJobInputter: PDBJobInputter::pose_from_job
 protocols.jd2.PDBJobInputter: filling pose from PDB structure.pdb
 core.chemical.GlobalResidueTypeSet: Finished initializing fa_standard residue type set.  Created 985 residue types
-core.chemical.GlobalResidueTypeSet: Total time to initialize 0.516545 seconds.
+core.chemical.GlobalResidueTypeSet: Total time to initialize 0.533393 seconds.
 core.import_pose.import_pose: File 'structure.pdb' automatically determined to be of type PDB from contents.
 protocols.rosetta_scripts.RosettaScriptsParser: dock_design_filename=relax_v6_1000.xml
 protocols.rosetta_scripts.RosettaScriptsParser: Validating input script...
@@ -152,7 +152,7 @@ core.scoring.elec.util: Read 40 countpair representative atoms
 core.pack.dunbrack.RotamerLibrary: shapovalov_lib_fixes_enable option is true.
 core.pack.dunbrack.RotamerLibrary: Binary rotamer library selected: /usr/local/database/rotamer/beta_nov2016/Dunbrack10.lib.bin
 core.pack.dunbrack.RotamerLibrary: Using Dunbrack library binary file '/usr/local/database/rotamer/beta_nov2016/Dunbrack10.lib.bin'.
-core.pack.dunbrack.RotamerLibrary: Dunbrack 2010 library took 0.045873 seconds to load from binary
+core.pack.dunbrack.RotamerLibrary: Dunbrack 2010 library took 0.052396 seconds to load from binary
 protocols.relax.FastRelax: CMD: repeat  -173.549  0  0  0.55
 protocols.relax.FastRelax: CMD: coord_cst_weight  -173.549  0  0  0.55
 protocols.relax.FastRelax: CMD: scale:fa_rep  -217.971  0  0  0.022
@@ -456,9 +456,9 @@ protocols.relax.FastRelax: CMD: accept_to_best  -232.309  0.329831  0.329831  0.
 protocols.relax.FastRelax: CMD: endrepeat  -232.309  0.329831  0.329831  0.55
 protocols::checkpoint: Deleting checkpoints of FastRelax
 protocols.rosetta_scripts.ParsedProtocol: setting status to success
-protocols.jd2.JobDistributor: flags_relax_v6_1000_structure_0001 reported success in 139 seconds
+protocols.jd2.JobDistributor: flags_relax_v6_1000_structure_0001 reported success in 142 seconds
 protocols.jd2.JobDistributor: no more batches to process... 
-protocols.jd2.JobDistributor: 1 jobs considered, 1 jobs attempted in 139 seconds
+protocols.jd2.JobDistributor: 1 jobs considered, 1 jobs attempted in 142 seconds
 basic.citation_manager.CitationManager: 
 The following Rosetta modules were used during this run of Rosetta, and should be cited:
 
