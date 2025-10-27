@@ -641,7 +641,7 @@ sys     0m2.746s
 
 # todo-- check 
 
-Relax Run time: 25 seconds 
+Relax Run time: 30 seconds 
 
 Pairwise Evaluation: 2 seconds
 
@@ -671,6 +671,12 @@ sys     0m2.711s
 
 ```
 
+Relax Run time: 17 seconds 
+
+Pairwise Evaluation: 2 seconds
+
+Filter run time: 26 seconds
+
 So we are running approx 15 seconds faster. Wow, a 15 second simulation would be awesome. 
 
 
@@ -691,6 +697,12 @@ real    2m21.808s
 user    2m21.863s
 sys     0m2.669s
 ```
+Relax Run time: 17 seconds 
+
+Pairwise Evaluation: 2 seconds
+
+Filter run time: 26 seconds
+
 
 
 
@@ -712,9 +724,17 @@ user    2m56.994s
 sys     0m2.849s
 ```
 
+Relax Run time: 30 seconds 
 
-So adding extra rotamers in this case adds 15-20 seconds per run.
-=
+Pairwise Evaluation: 2 seconds
+
+Filter run time: 26 seconds
+
+So adding extra rotamers in this case adds 15-20 seconds per run, which double 
+the run.
+
+
+
 
 
 ## Example run with CHTC 
