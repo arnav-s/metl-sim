@@ -697,9 +697,24 @@ sys     0m2.669s
 Finally we will test how timing is effected by adding in extra rotamers.
 As expected it increases runtimes a lot. 
 
+```angular2html
+root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart_nstruct_1_extra_rotamers.txt
+Running Rosetta on variant pab1_cm.pdb _wt (1/3)
+Processing variant pab1_cm.pdb _wt took 59.20
+Running Rosetta on variant pab1_cm.pdb L55A (2/3)
+Processing variant pab1_cm.pdb L55A took 57.03
+Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
+Processing variant pab1_cm.pdb L55A,G25W took 59.89
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-27_01-20-36_ZnpGpX7tqWcF/pairwise_energies.h5
+
+real    2m57.114s
+user    2m56.994s
+sys     0m2.849s
+```
 
 
-
+So adding extra rotamers in this case adds 15-20 seconds per run.
+=
 
 
 ## Example run with CHTC 

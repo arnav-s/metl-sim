@@ -1,0 +1,4 @@
+-s structure_0002.pdb
+-score:weights beta_nov16_cart
+-beta_nov16_cart
+-out:file:silent pairwise_scores.tbl
