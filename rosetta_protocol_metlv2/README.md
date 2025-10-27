@@ -734,6 +734,8 @@ So adding extra rotamers in this case adds 15-20 seconds per run, which double
 the run.
 
 
+>Note: I forgot the init task operations for for most of the scripts above except for the last one. 
+
 
 
 
