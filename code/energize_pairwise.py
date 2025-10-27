@@ -451,7 +451,8 @@ def main(args):
                        "relax_repeats": args.relax_repeats,
                        "relax_nstruct": args.relax_nstruct,
                        "relax_repack_distance":args.relax_repack_distance,
-                       "relax_minimize_distance":args.relax_minimize_distance
+                       "relax_minimize_distance":args.relax_minimize_distance,
+                       "relax_additional_flags":"\n".join([f"-{val}" for val in args.relax_additional_flags])
                        }
     save_csv_from_dict(join(log_dir, "hparams.csv"), rosetta_hparams)
 
@@ -608,6 +609,16 @@ if __name__ == "__main__":
                         type=float,
                         default=10000.0)
 
+    parser.add_argument(
+        "--relax_additional_flags",
+        help="Additional flags [DO NOT INCLUDE -, e.g ex1 instead "
+             "of -ex1 (can be multiple, separated by newlines if using @file, )",
+        nargs="+",  # allows multiple values
+        type=str,
+        default=[]
+    )
+
+
     # logging and output options
     parser.add_argument("--save_wd",
                         help="set this flag to save the full working directory for each variant",
@@ -616,6 +627,9 @@ if __name__ == "__main__":
     parser.add_argument("--log_dir_base",
                         help="base output directory where log dirs for each run will be placed",
                         default="output/energize_outputs")
+
+
+
 
     # HTCondor job information and program run information
     parser.add_argument("--cluster",
