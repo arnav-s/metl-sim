@@ -11,3 +11,7 @@ templates/energize_pairwise_wd_v6_no_cart
 --relax_minimize_distance
 100000
 --save_wd
+--log_dir_base
+output/energize_outputs
+--pdb_dir
+pdb_files/prepared_pdb_files

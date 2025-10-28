@@ -15,3 +15,7 @@ templates/energize_pairwise_wd_v6_no_cart
 ex1
 ex2
 use_input_sc
+--log_dir_base
+output/energize_outputs
+--pdb_dir
+pdb_files/prepared_pdb_files
