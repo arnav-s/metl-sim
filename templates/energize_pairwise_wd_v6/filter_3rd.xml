@@ -14,10 +14,10 @@
                         <PreventRepackingRLT/>
                 </OperateOnResidueSubset>
 	</TASKOPERATIONS>
-<!--	<SCOREFXNS>-->
-<!--		<ScoreFunction name="TotalHydrophobic1" weights="total_hydrophobic_weights_version1.wts"/>-->
-<!--		<ScoreFunction name="TotalHydrophobic2" weights="total_hydrophobic_weights_version2.wts"/>-->
-<!--	</SCOREFXNS>-->
+	<SCOREFXNS>
+		<ScoreFunction name="TotalHydrophobic1" weights="total_hydrophobic_weights_version1.wts"/>
+		<ScoreFunction name="TotalHydrophobic2" weights="total_hydrophobic_weights_version2.wts"/>
+	</SCOREFXNS>
 	<FILTERS>
 		
 		<AtomicContactCount name="contact_all" distance="4.5" confidence="0" />
@@ -51,8 +51,8 @@
 		<ExposedHydrophobics name="exposed_np_AFIMLWVY" sasa_cutoff="20" confidence="0" threshold="1"/> 
 
 
-<!--  		<ScoreType name="total_hydrophobic" scorefxn="TotalHydrophobic1" threshold="0" confidence="0"/>-->
-<!--		<ScoreType name="total_hydrophobic_AFILMVWY" scorefxn="TotalHydrophobic2" threshold="0" confidence="0"/>-->
+  		<ScoreType name="total_hydrophobic" scorefxn="TotalHydrophobic1" threshold="0" confidence="0"/>
+		<ScoreType name="total_hydrophobic_AFILMVWY" scorefxn="TotalHydrophobic2" threshold="0" confidence="0"/>
 
 
   		<PackStat name="pack" confidence="0"/>
@@ -88,8 +88,8 @@
                 <Add filter_name="exposed_total" />
                 <Add filter_name="exposed_polars" />
                 <Add filter_name="exposed_np_AFIMLWVY" />
-<!--		<Add filter_name="total_hydrophobic" />-->
-<!--                <Add filter_name="total_hydrophobic_AFILMVWY" />-->
+				<Add filter_name="total_hydrophobic" />
+                <Add filter_name="total_hydrophobic_AFILMVWY" />
                 <Add filter_name="pack" />
                 <Add filter_name="unsat_hbond" />
 		<Add filter_name="ss_mis" />               
