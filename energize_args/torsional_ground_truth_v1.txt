@@ -16,4 +16,4 @@ output/energize_outputs
 --pdb_dir
 pdb_files/prepared_pdb_files
 --relax_optimization_and_scoring_scheme
-cartesian
+torsional

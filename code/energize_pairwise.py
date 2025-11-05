@@ -156,10 +156,13 @@ def write_pairwise_energies(database_file: str, pdb_fn: str, variant: str, pairw
         write_hdf_data(grp, pairwise_scores)
         
 
-def run_filter_pairwise_pipeline(working_dir:str,idx:str,run_times:dict):
+def run_filter_pairwise_pipeline(working_dir:str,idx:str,run_times:dict,rosetta_hparams:dict):
     # now I need to fill in the flag files for the proper idx of interest
     template_fns = ["flags_score_pairwise_temp", "flags_filter_temp"]
     output_fns = ["flags_score_pairwise", "flags_filter"]
+
+    rosetta_hparams_str = {k: str(v) for k, v in rosetta_hparams.items()}
+
 
     for template_fn, output_fn in zip(template_fns, output_fns):
         # load the template
@@ -167,8 +170,9 @@ def run_filter_pairwise_pipeline(working_dir:str,idx:str,run_times:dict):
         with open(template_fn, "r") as f:
             template_str = f.read()
 
+
         # fill in the template
-        formatted = template_str.format(idx_placeholder = idx)
+        formatted = template_str.format(idx_placeholder = idx,**rosetta_hparams_str)
 
         with open(join(working_dir, output_fn), "w") as f:
             f.write(formatted)
@@ -325,7 +329,7 @@ def run_single_variant(pdb_fn, chain, variant, rosetta_hparams,
 
 
 
-    run_times=run_filter_pairwise_pipeline(working_dir,idx,run_times)
+    run_times=run_filter_pairwise_pipeline(working_dir,idx,run_times,rosetta_hparams)
     score_df=score_df.reset_index(drop=True)
 
 
@@ -446,13 +450,35 @@ def main(args):
     # save job info
     save_job_info(script_start, job_uuid, args.cluster, args.process, args.commit_id, log_dir)
 
+
+    # error checking because right now code only
+    # supported for these template directories
+    allowed_template_dirs=['templates/energize_pairwise_wd_v6']
+    if args.template_dir in allowed_template_dirs:
+        pass
+    else:
+        ValueError(f"--template_dir must be in allowed template_dirs: {allowed_template_dirs}")
+
+
+    if "torsional" == args.relax_optimization_and_scoring_scheme:
+        relax_weights='beta_nov16'
+        relax_cartesian_optimization = "false"
+    elif "cartesian"==args.relax_optimization_and_scoring_scheme:
+        relax_weights='beta_nov16_cart'
+        relax_cartesian_optimization= "true"
+    else:
+        raise ValueError("--relax_optimization_and_scoring_scheme must be one of these values ['torsional','cartesian']")
+
+
     # create a dictionary of just rosetta hyperparameters that can be passed around throughout functions and saved
     rosetta_hparams = {"minimize_default_max_cycles": args.minimize_default_max_cycles,
                        "relax_repeats": args.relax_repeats,
                        "relax_nstruct": args.relax_nstruct,
                        "relax_repack_distance":args.relax_repack_distance,
                        "relax_minimize_distance":args.relax_minimize_distance,
-                       "relax_additional_flags":"\n".join([f"-{val}" for val in args.relax_additional_flags])
+                       "relax_additional_flags":"\n".join([f"-{val}" for val in args.relax_additional_flags]),
+                       'relax_cartesian_optimization':relax_cartesian_optimization,
+                       'relax_weights':relax_weights
                        }
     save_csv_from_dict(join(log_dir, "hparams.csv"), rosetta_hparams)
 
@@ -561,10 +587,7 @@ if __name__ == "__main__":
 
     # todo: change to specifying the chain in the variants_fn file to support different chains in a single run
 
-    parser.add_argument("--template_dir",
-                        help="template directory containing the xml files and flags for this particular rosetta run"
-                             "(i.e. templates/energize_pairwise_wd_v6_cartesian)",
-                        type=str)
+
 
     parser.add_argument("--chain",
                         help="the chain to use from the pdb file",
@@ -581,6 +604,17 @@ if __name__ == "__main__":
                         help="fraction of variants that can fail but still consider this job successful",
                         type=float,
                         default=0.25)
+
+
+
+    parser.add_argument("--relax_optimization_and_scoring_scheme",
+                        help="This will define the use of torsional (beta_nov16) or cartesian "
+                             "(beta_nov16_cart) weights, and the optimization scheme during FastRelax."
+                             "Output pose scoring's will also be based on this parameter.",
+                        type=str,
+                        default="torsional",
+                        choices=['torsional','cartesian'])
+
 
     # energize hyperparameters
     parser.add_argument("--minimize_default_max_cycles",
@@ -628,7 +662,11 @@ if __name__ == "__main__":
                         help="base output directory where log dirs for each run will be placed",
                         default="output/energize_outputs")
 
-
+    parser.add_argument("--template_dir",
+                        help="template directory containing the xml files and flags for this particular rosetta run",
+                        type=str,
+                        default='templates/energize_pairwise_wd_v6',
+                        choices=['templates/energize_pairwise_wd_v6'])
 
 
     # HTCondor job information and program run information

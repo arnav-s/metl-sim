@@ -1,8 +1,0 @@
--s structure.pdb
--parser:protocol relax.xml
--ignore_unrecognized_res
--beta_nov16_cart
--nstruct 2
--optimization
-    -default_max_cycles 2000
--out:file:scorefile relax.sc

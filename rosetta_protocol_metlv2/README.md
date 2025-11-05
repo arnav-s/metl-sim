@@ -589,21 +589,20 @@ docker run -it -v /path/to/metl-sim:/rosetta arnvsharma/metl-sim:latest /bin/bas
 4. Now, in the docker container, run the pab1 example with cartesian with wild type and a single mutation in cartesian space in the metl-sim folder (runtime ~5-10 minutes): 
 
 ```angular2html
-root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example.txt
+root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_cartesian.txt
 Running Rosetta on variant pab1_cm.pdb _wt (1/3)
-Processing variant pab1_cm.pdb _wt took 180.19
+Processing variant pab1_cm.pdb _wt took 185.17
 Running Rosetta on variant pab1_cm.pdb L55A (2/3)
-Processing variant pab1_cm.pdb L55A took 179.63
+Processing variant pab1_cm.pdb L55A took 186.12
 Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
-Processing variant pab1_cm.pdb L55A,G25W took 190.68
-rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-27_00-44-55_LNKZTDa4KwY3/pairwise_energies.h5
+Processing variant pab1_cm.pdb L55A,G25W took 199.16
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-11-05_18-18-56_TYp2RvRiUnJD/pairwise_energies.h5
 
-real    9m11.453s
-user    9m11.373s
-sys     0m2.750s
+real    9m31.492s
+user    9m31.205s
+sys     0m2.828s
 ```
 
-#todo - check 
 
 Relax Run time: 150 seconds 
 
@@ -612,34 +611,31 @@ Pairwise Evaluation: 2 seconds
 Filter run time: 27 seconds 
 
 
-
 The reason why it took so long was because I did two nstructs (so relax run time times 2) to test out  the functionality of the pairwise scoring and filter 
 scores. Since these require different scoring, etc. 
 
 This will output all the files and documents to `rosetta_protocol_metlv2/output/energize_outputs` .
 
 
-## Non- Cartesian Run
-Now with non cartesian, same run. Keep in mind this is with full minimization and 2 nstructs, so this Fast of a  FastRelax run time is great! 
+## Torsional Run
+Now with torsional, same run. Keep in mind this is with full minimization and 2 nstructs, so this Fast of a  FastRelax run time is great! 
 This leads to the idea, we should have some higher cutoff for the minimization distance, than for the repacking.
 
 ```angular2html
-root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart.txt
+root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_torsional.txt
 Running Rosetta on variant pab1_cm.pdb _wt (1/3)
-Processing variant pab1_cm.pdb _wt took 57.75
+Processing variant pab1_cm.pdb _wt took 58.49
 Running Rosetta on variant pab1_cm.pdb L55A (2/3)
-Processing variant pab1_cm.pdb L55A took 59.41
+Processing variant pab1_cm.pdb L55A took 59.26
 Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
-Processing variant pab1_cm.pdb L55A,G25W took 59.43
-rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-27_00-56-00_byqvzz4mffq9/pairwise_energies.h5
+Processing variant pab1_cm.pdb L55A,G25W took 61.28
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-11-05_18-33-36_X5KRNYtUEMSH/pairwise_energies.h5
 
-real    2m57.571s
-user    2m57.553s
-sys     0m2.746s
+real    3m0.046s
+user    3m0.174s
+sys     0m2.596s
 ```
 
-
-# todo-- check 
 
 Relax Run time: 30 seconds 
 
@@ -656,19 +652,18 @@ We will need to decide if we want to do a filter or not, its runtime is non-negl
 Looking at  nstruct 1 (same params as above - I didn't make a new arg txt file for this, look to output files):
 
 ```angular2html
-root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart_nstruct_1.txt
+root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_torsional_nstruct_1.txt
 Running Rosetta on variant pab1_cm.pdb _wt (1/3)
-Processing variant pab1_cm.pdb _wt took 46.15
+Processing variant pab1_cm.pdb _wt took 45.28
 Running Rosetta on variant pab1_cm.pdb L55A (2/3)
-Processing variant pab1_cm.pdb L55A took 47.24
+Processing variant pab1_cm.pdb L55A took 46.52
 Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
-Processing variant pab1_cm.pdb L55A,G25W took 47.78
-rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-27_00-59-52_dTiUEowMA6Ue/pairwise_energies.h5
+Processing variant pab1_cm.pdb L55A,G25W took 47.12
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-11-05_18-39-33_JXRxCNKSfgPe/pairwise_energies.h5
 
-real    2m22.167s
-user    2m22.176s
-sys     0m2.711s
-
+real    2m19.895s
+user    2m19.914s
+sys     0m2.694s
 ```
 
 Relax Run time: 17 seconds 
@@ -684,18 +679,18 @@ Reducing minimization cycles doesn't seem to do much. Telling me its already con
 true of all proteins though.)
 
 ```angular2html
-root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart_nstruct_1_200_max_cycles.txt
+root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_torsional_nstruct_1_200_max_cycles.txt
 Running Rosetta on variant pab1_cm.pdb _wt (1/3)
-Processing variant pab1_cm.pdb _wt took 47.48
+Processing variant pab1_cm.pdb _wt took 47.11
 Running Rosetta on variant pab1_cm.pdb L55A (2/3)
-Processing variant pab1_cm.pdb L55A took 46.51
+Processing variant pab1_cm.pdb L55A took 46.70
 Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
-Processing variant pab1_cm.pdb L55A,G25W took 46.77
-rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-27_01-02-42_7uKhECAUYdpm/pairwise_energies.h5
+Processing variant pab1_cm.pdb L55A,G25W took 47.39
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-11-05_18-42-33_nwxBqBJYBLSR/pairwise_energies.h5
 
-real    2m21.808s
-user    2m21.863s
-sys     0m2.669s
+real    2m22.169s
+user    2m22.256s
+sys     0m2.629s
 ```
 Relax Run time: 17 seconds 
 
@@ -710,18 +705,18 @@ Finally we will test how timing is effected by adding in extra rotamers.
 As expected it increases runtimes a lot. 
 
 ```angular2html
-root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_no_cart_nstruct_1_extra_rotamers.txt
+root@0230b73b01e4:/rosetta# time python  code/energize_pairwise.py @rosetta_protocol_metlv2/args/example_torsional_nstruct_1_extra_rotamers.txt
 Running Rosetta on variant pab1_cm.pdb _wt (1/3)
-Processing variant pab1_cm.pdb _wt took 59.20
+Processing variant pab1_cm.pdb _wt took 58.74
 Running Rosetta on variant pab1_cm.pdb L55A (2/3)
-Processing variant pab1_cm.pdb L55A took 57.03
+Processing variant pab1_cm.pdb L55A took 59.23
 Running Rosetta on variant pab1_cm.pdb L55A,G25W (3/3)
-Processing variant pab1_cm.pdb L55A,G25W took 59.89
-rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-10-27_01-20-36_ZnpGpX7tqWcF/pairwise_energies.h5
+Processing variant pab1_cm.pdb L55A,G25W took 60.11
+rosetta_protocol_metlv2/output/energize_outputs/energize_local_local_2025-11-05_18-46-58_DFfhXzYfemvB/pairwise_energies.h5
 
-real    2m57.114s
-user    2m56.994s
-sys     0m2.849s
+real    2m59.049s
+user    2m59.153s
+sys     0m2.606s
 ```
 
 Relax Run time: 30 seconds 
@@ -732,9 +727,6 @@ Filter run time: 26 seconds
 
 So adding extra rotamers in this case adds 15-20 seconds per run, which double 
 the run.
-
-
->Note: I forgot the init task operations for for most of the scripts above except for the last one. 
 
 
 
