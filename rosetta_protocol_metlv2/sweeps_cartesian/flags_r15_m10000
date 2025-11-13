@@ -1,4 +1,4 @@
--s structure.pdb
+-s prepare_pab1_raw_0001.pdb
 -parser:protocol relax_r15_m10000.xml
 -ignore_unrecognized_res
 -beta_nov16_cart

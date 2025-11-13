@@ -17,6 +17,11 @@ RUN_SCRIPT_NAME = "run_all_relax.sh"
 
 
 def load_templates():
+    if not XML_TEMPLATE_PATH.is_file():
+        raise FileNotFoundError(f"Cannot find XML template: {XML_TEMPLATE_PATH}")
+    if not FLAGS_TEMPLATE_PATH.is_file():
+        raise FileNotFoundError(f"Cannot find flags template: {FLAGS_TEMPLATE_PATH}")
+
     xml_template = XML_TEMPLATE_PATH.read_text()
     flags_template = FLAGS_TEMPLATE_PATH.read_text()
     return xml_template, flags_template
@@ -37,12 +42,15 @@ def update_flags(flags_template: str, xml_filename: str, sc_filename: str, prefi
       - -parser:protocol <xmlfile>
       - -out:file:scorefile <scorefile.sc>
       - -out:prefix <prefix_>
+      - -s prepare_pab1_raw_0001.pdb
     """
     lines = flags_template.splitlines()
     new_lines = []
+
     found_protocol = False
     found_scorefile = False
     found_prefix = False
+    found_s_flag = False
 
     for line in lines:
         stripped = line.strip()
@@ -62,6 +70,11 @@ def update_flags(flags_template: str, xml_filename: str, sc_filename: str, prefi
             found_prefix = True
             continue
 
+        if stripped.startswith("-s "):
+            new_lines.append("-s prepare_pab1_raw_0001.pdb")
+            found_s_flag = True
+            continue
+
         new_lines.append(line)
 
     if not found_protocol:
@@ -73,6 +86,9 @@ def update_flags(flags_template: str, xml_filename: str, sc_filename: str, prefi
     if not found_prefix:
         new_lines.append(f"-out:prefix {prefix}")
 
+    if not found_s_flag:
+        new_lines.append("-s prepare_pab1_raw_0001.pdb")
+
     return "\n".join(new_lines) + "\n"
 
 
@@ -80,12 +96,14 @@ def main():
     xml_template, flags_template = load_templates()
     runs = []  # list of (flags_filename, log_filename)
 
-    # Sweep 1
+    # -----------------------------
+    # Sweep 1: repack distances
+    # -----------------------------
     for repack in REPACK_DISTANCES:
         minimize = FIXED_MIN_DISTANCE_FOR_REPACK_SWEEP
 
         xml_name = f"relax_r{repack}_m{minimize}.xml"
-        flags_name = f"flags_r{repack}_m{minimize}"
+        flags_name = f"flags_r{repack}_m{minimize}"  # no extension
         sc_name = f"relax_r{repack}_m{minimize}.sc"
         log_name = f"flags_r{repack}_m{minimize}.log"
         prefix = f"flags_r{repack}_m{minimize}_"
@@ -97,7 +115,9 @@ def main():
 
         runs.append((flags_name, log_name))
 
-    # Sweep 2
+    # -----------------------------
+    # Sweep 2: minimization distances
+    # -----------------------------
     for minimize in MINIMIZE_DISTANCES:
         repack = FIXED_REPACK_DISTANCE_FOR_MIN_SWEEP
 
@@ -114,7 +134,9 @@ def main():
 
         runs.append((flags_name, log_name))
 
-    # Write shell script
+    # -----------------------------
+    # Write shell submission script
+    # -----------------------------
     lines = [
         "#!/bin/bash",
         "set -e",
@@ -129,8 +151,9 @@ def main():
         lines.append("")
 
     Path(RUN_SCRIPT_NAME).write_text("\n".join(lines) + "\n")
-    print(f"Generated {len(runs)} XML, flags, and {RUN_SCRIPT_NAME}")
+    print(f"Generated {len(runs)} XML/flags pairs and {RUN_SCRIPT_NAME}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
+
