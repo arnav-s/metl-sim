@@ -1,0 +1,41 @@
+<ROSETTASCRIPTS>
+  <SCOREFXNS>
+    <ScoreFunction name="beta_sf" weights="beta_nov16_cart"/>
+  </SCOREFXNS>
+
+  <RESIDUE_SELECTORS>
+    <Neighborhood name="surrounding" resnums="55" distance="10"/>
+    <Not name="rest" selector="surrounding"/>
+  </RESIDUE_SELECTORS>
+
+
+  <MOVE_MAP_FACTORIES>
+    <!-- allow backbone and sidechain minimization only for residues in "surrounding" -->
+    <MoveMapFactory name="local_mm" bb="0" chi="0">
+      <Backbone residue_selector="surrounding" enable="true"/>
+      <Chi residue_selector="surrounding" enable="true"/>
+    </MoveMapFactory>
+  </MOVE_MAP_FACTORIES>
+
+
+
+  <MOVERS>
+    <!-- take residue 55 in chain A and mutate it to an Alanine (A)-->
+
+    <MutateResidue name="mutant" target="55A" new_res="ALA"/>
+    <FastRelax name="relax"
+               scorefxn="beta_sf"
+               disable_design="true"
+               cartesian="true"
+               repeats="10"
+               movemap_factory="local_mm"/>
+  </MOVERS>
+
+  <PROTOCOLS>
+    <!-- make sure to add a new mover for each new mutant-->
+    <Add mover_name="mutant"/>
+    <Add mover_name="relax"/>
+  </PROTOCOLS>
+
+  <OUTPUT scorefxn="beta_sf"/>
+</ROSETTASCRIPTS>

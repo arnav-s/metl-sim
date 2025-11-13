@@ -1,0 +1,70 @@
+<ROSETTASCRIPTS>
+  <SCOREFXNS>
+    <ScoreFunction name="beta_sf" weights="beta_nov16"/>
+  </SCOREFXNS>
+
+  <RESIDUE_SELECTORS>
+    <Neighborhood name="surrounding_move_map" resnums="55" distance="1000"/>
+    <Not name="rest_move_map" selector="surrounding_move_map"/>
+
+    <Neighborhood name="surrounding_repack" resnums="55" distance="35"/>
+    <Not name="rest_repack" selector="surrounding_repack"/>
+
+  </RESIDUE_SELECTORS>
+
+
+
+
+<TASKOPERATIONS>
+  <InitializeFromCommandline name="init"/>
+
+
+  <!-- These two are frequently implicit in FastRelax -->
+<!--  <IncludeCurrent name="ic"/>-->
+<!--  <ExtraRotamersGeneric name="exrot" ex1="1" ex2="1"/>-->
+<!--  <LimitAromaChi2 name="limchi2"/>-->
+<!--  <NoRepackDisulfides name="nordis"/>  &lt;!&ndash; prevents packing across disulfides &ndash;&gt;-->
+
+  <OperateOnResidueSubset name="repack_res" selector="surrounding_repack">
+      <RestrictToRepackingRLT/>
+    </OperateOnResidueSubset>
+
+  <!-- Freeze non-selected -->
+  <OperateOnResidueSubset name="freeze_others" selector="rest_repack">
+    <PreventRepackingRLT/>
+  </OperateOnResidueSubset>
+</TASKOPERATIONS>
+
+
+
+  <MOVE_MAP_FACTORIES>
+    <!-- allow backbone and sidechain minimization only for residues in "surrounding" -->
+    <MoveMapFactory name="local_mm" bb="0" chi="0">
+      <Backbone residue_selector="surrounding_move_map" enable="true"/>
+      <Chi residue_selector="surrounding_move_map" enable="true"/>
+    </MoveMapFactory>
+  </MOVE_MAP_FACTORIES>
+
+
+
+  <MOVERS>
+    <!-- take residue 55 in chain A and mutate it to an Alanine (A)-->
+
+    <MutateResidue name="mutant" target="55A" new_res="ALA"/>
+    <FastRelax name="relax"
+             scorefxn="beta_sf"
+             disable_design="true"
+             repeats="10"
+             task_operations="init,repack_res,freeze_others"
+             movemap_factory="local_mm"/>
+
+  </MOVERS>
+
+  <PROTOCOLS>
+    <!-- make sure to add a new mover for each new mutant-->
+    <Add mover_name="mutant"/>
+    <Add mover_name="relax"/>
+  </PROTOCOLS>
+
+  <OUTPUT scorefxn="beta_sf"/>
+</ROSETTASCRIPTS>

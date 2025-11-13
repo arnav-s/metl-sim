@@ -1,0 +1,6 @@
+-s structure.pdb
+-parser:protocol relax_v6_10.xml
+-ignore_unrecognized_res
+-beta_nov16_cart
+-out:prefix flags_relax_v6_10_
+-out:file:scorefile flags_relax_v6_10.sc

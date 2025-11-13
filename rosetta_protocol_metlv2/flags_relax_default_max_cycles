@@ -1,0 +1,7 @@
+-s structure.pdb
+-parser:protocol relax_v3.xml
+-ignore_unrecognized_res
+-default_max_cycles 1
+-beta_nov16_cart
+-out:prefix flags_relax_default_max_cycles_
+-out:file:scorefile flags_relax_default_max_cycles.sc

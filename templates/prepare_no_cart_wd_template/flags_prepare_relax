@@ -1,0 +1,9 @@
+-ignore_unrecognized_res
+-ex1
+-ex2
+-use_input_sc
+-flip_HNQ
+-no_optH false
+-beta_nov16
+-relax:constrain_relax_to_start_coords
+-parser:protocol prepare_relax_no_cart.xml

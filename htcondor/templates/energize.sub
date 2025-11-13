@@ -1,10 +1,15 @@
-universe = vanilla
+universe = container
 +WantFlocking = true
 +WantGlideIn = true
 
 log = output/condor_logs/rosetta_$(Cluster)_$(Process).log
 error = output/condor_logs/rosetta_$(Cluster)_$(Process).err
 output = output/condor_logs/rosetta_$(Cluster)_$(Process).out
+
+# need to do this becasue of some obscure error when using max_default_idle
+container_image = metl_sim.sif
+transfer_container = False
+
 
 # rosetta provides the precompiled 64bit binaries for linux
 # has_avx is included because I think I ran into avx-related errors in the past
@@ -15,7 +20,7 @@ executable = run.sh
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 
-transfer_input_files = run.sh, pass.txt, code.tar.gz, args/$(Process).txt, energize_args.txt, {osdf_rosetta_distribution}, {osdf_python_distribution}, {transfer_input_files}
+transfer_input_files = run.sh, code.tar.gz,  args/$(Process).txt, osdf:///chtc/staging/bcjohnson7/metl_sim.sif, energize_args.txt, {transfer_input_files}
 transfer_output_files = output
 
 request_cpus = 1

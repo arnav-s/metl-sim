@@ -1,0 +1,7 @@
+-s structure.pdb
+-parser:protocol relax_v3.xml
+-ignore_unrecognized_res
+-beta_nov16_cart
+-out:prefix flags_relax_v3_nstruct_10_
+-out:file:scorefile flags_relax_v3_nstruct_10.sc
+-nstruct 10

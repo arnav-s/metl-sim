@@ -1,0 +1,7 @@
+-s structure.pdb
+-parser:protocol relax_v3.xml
+-ignore_unrecognized_res
+-loops:minimize_max_iter 0
+-beta_nov16_cart
+-out:prefix flags_relax_minimize_max_iter_
+-out:file:scorefile flags_relax_minimize_max_iter.sc

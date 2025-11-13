@@ -1,0 +1,6 @@
+-s structure.pdb
+-parser:protocol relax_v5_1000.xml
+-ignore_unrecognized_res
+-beta_nov16_cart
+-out:prefix flags_relax_restrict_backbone_1000_
+-out:file:scorefile flags_relax_restrict_backbone_1000.sc

@@ -1,0 +1,12 @@
+--run_type
+energize_pairwise
+--run_name
+pab1_example_run_protocol_v2
+--energize_args_fn
+rosetta_protocol_metlv2/args/example.txt
+--master_variant_fn
+variant_lists/pab1_cm_example.txt
+--variants_per_job
+3
+--github_tag
+95142db9ccd3a24d1194fd506ae781cccb33ed48
