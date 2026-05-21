@@ -1,0 +1,9 @@
+-s prepare_gfp_raw_0001.pdb
+-parser:protocol relax_r10000_m25.xml
+-ignore_unrecognized_res
+-beta_nov16_cart
+-nstruct 1
+-optimization
+    -default_max_cycles 2000
+-out:file:scorefile relax_r10000_m25.sc
+-out:prefix flags_r10000_m25_

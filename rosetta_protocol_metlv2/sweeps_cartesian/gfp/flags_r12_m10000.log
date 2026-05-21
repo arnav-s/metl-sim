@@ -1,0 +1,418 @@
+********  (C) Copyright Rosetta Commons Member Institutions.  ***************
+* Use of Rosetta for commercial purposes may require purchase of a license. *
+********  See LICENSE.md or email license@uw.edu for more details. **********
+core.init: Checking for fconfig files in pwd and ./rosetta/flags 
+core.init: Rosetta version: 2025.37+HEAD.df75a9c48e df75a9c48e763e52a7aa3f5dfba077f4da88dbf5 https://github.com/RosettaCommons/rosetta.git 2025-09-03T12:23:30
+core.init: Rosetta extras: []
+core.init: command: rosetta_scripts @flags_r12_m10000
+basic.random.init_random_generator: 'RNG device' seed mode, using '/dev/urandom', seed=-456386288 seed_offset=0 real_seed=-456386288
+basic.random.init_random_generator: RandomGenerator:init: Normal mode, seed=-456386288 RG_type=mt19937
+core.init: found database environment variable ROSETTA3_DB: /usr/local/database
+protocols.jd2.PDBJobInputter: Instantiate PDBJobInputter
+protocols.jd2.PDBJobInputter: PDBJobInputter::fill_jobs
+protocols.jd2.PDBJobInputter: pushed prepare_gfp_raw_0001.pdb nstruct index 1
+protocols.evaluation.ChiWellRmsdEvaluatorCreator: Evaluation Creator active ... 
+protocols.jd2.PDBJobInputter: PDBJobInputter::pose_from_job
+protocols.jd2.PDBJobInputter: filling pose from PDB prepare_gfp_raw_0001.pdb
+core.chemical.GlobalResidueTypeSet: Finished initializing fa_standard residue type set.  Created 985 residue types
+core.chemical.GlobalResidueTypeSet: Total time to initialize 0.615913 seconds.
+core.import_pose.import_pose: File 'prepare_gfp_raw_0001.pdb' automatically determined to be of type PDB from contents.
+protocols.rosetta_scripts.RosettaScriptsParser: dock_design_filename=relax_r12_m10000.xml
+protocols.rosetta_scripts.RosettaScriptsParser: Validating input script...
+protocols.rosetta_scripts.RosettaScriptsSchemaValidator: Generating XML Schema for rosetta_scripts...
+protocols.rosetta_scripts.RosettaScriptsSchemaValidator: ...done
+protocols.rosetta_scripts.RosettaScriptsSchemaValidator: Initializing schema validator...
+protocols.rosetta_scripts.RosettaScriptsSchemaValidator: ...done
+protocols.rosetta_scripts.RosettaScriptsParser: ...done
+protocols.rosetta_scripts.RosettaScriptsParser: Parsed script:
+<ROSETTASCRIPTS>
+	<SCOREFXNS>
+		<ScoreFunction name="beta_sf" weights="beta_nov16_cart"/>
+	</SCOREFXNS>
+	<RESIDUE_SELECTORS>
+		<Neighborhood distance="10000" name="surrounding_move_map" resnums="55"/>
+		<Not name="rest_move_map" selector="surrounding_move_map"/>
+		<Neighborhood distance="12" name="surrounding_repack" resnums="55"/>
+		<Not name="rest_repack" selector="surrounding_repack"/>
+	</RESIDUE_SELECTORS>
+	<TASKOPERATIONS>
+		<InitializeFromCommandline name="init"/>
+		<OperateOnResidueSubset name="repack_res" selector="surrounding_repack">
+			<RestrictToRepackingRLT/>
+		</OperateOnResidueSubset>
+		<OperateOnResidueSubset name="no_repack" selector="rest_repack">
+			<PreventRepackingRLT/>
+		</OperateOnResidueSubset>
+	</TASKOPERATIONS>
+	<MOVE_MAP_FACTORIES>
+		<MoveMapFactory bb="0" chi="0" name="local_mm">
+			<Backbone enable="true" residue_selector="surrounding_move_map"/>
+			<Chi enable="true" residue_selector="surrounding_move_map"/>
+		</MoveMapFactory>
+	</MOVE_MAP_FACTORIES>
+	<MOVERS>
+		<MutateResidue name="mutant" new_res="ALA" target="45A"/>
+		<FastRelax cartesian="true" disable_design="true" movemap_factory="local_mm" name="relax" repeats="5" scorefxn="beta_sf" task_operations="init,repack_res,no_repack"/>
+	</MOVERS>
+	<PROTOCOLS>
+		<Add mover_name="mutant"/>
+		<Add mover_name="relax"/>
+	</PROTOCOLS>
+	<OUTPUT scorefxn="beta_sf"/>
+</ROSETTASCRIPTS>
+core.scoring.ScoreFunctionFactory: SCOREFUNCTION: beta_nov16_cart.wts
+core.scoring.etable: Starting energy table calculation
+core.scoring.etable: smooth_etable: changing atr/rep split to bottom of energy well
+core.scoring.etable: smooth_etable: spline smoothing lj etables (maxdis = 6)
+core.scoring.etable: smooth_etable: spline smoothing solvation etables (max_dis = 6)
+core.scoring.etable: Finished calculating energy tables.
+basic.io.database: Database file opened: scoring/score_functions/hbonds/ref2015_params/HBPoly1D.csv
+basic.io.database: Database file opened: scoring/score_functions/hbonds/ref2015_params/HBFadeIntervals.csv
+basic.io.database: Database file opened: scoring/score_functions/hbonds/ref2015_params/HBEval.csv
+basic.io.database: Database file opened: scoring/score_functions/hbonds/ref2015_params/DonStrength.csv
+basic.io.database: Database file opened: scoring/score_functions/hbonds/ref2015_params/AccStrength.csv
+basic.io.database: Database file opened: scoring/score_functions/rama/fd_beta_nov2016/all.ramaProb
+basic.io.database: Database file opened: scoring/score_functions/rama/fd_beta_nov2016/prepro.ramaProb
+basic.io.database: Database file opened: scoring/score_functions/omega/omega_ppdep.all.txt
+basic.io.database: Database file opened: scoring/score_functions/omega/omega_ppdep.gly.txt
+basic.io.database: Database file opened: scoring/score_functions/omega/omega_ppdep.pro.txt
+basic.io.database: Database file opened: scoring/score_functions/omega/omega_ppdep.valile.txt
+basic.io.database: Database file opened: scoring/score_functions/P_AA_pp/P_AA
+basic.io.database: Database file opened: scoring/score_functions/P_AA_pp/P_AA_n
+core.scoring.P_AA: shapovalov_lib::shap_p_aa_pp_smooth_level of 1( aka low_smooth ) got activated.
+basic.io.database: Database file opened: scoring/score_functions/P_AA_pp/shapovalov/10deg/kappa131/a20.prop
+basic.io.database: Database file opened: scoring/score_functions/bondlength_bondangle/hydroxyl_torsion_preference.txt
+core.energy_methods.CartesianBondedEnergy: Initializing IdealParametersDatabase with default Ks=300 , 80 , 80 , 10 , 80
+basic.io.database: Database file opened: scoring/score_functions/bondlength_bondangle/default-lengths.txt
+core.energy_methods.CartesianBondedEnergy: Read 759 bb-independent lengths.
+basic.io.database: Database file opened: scoring/score_functions/bondlength_bondangle/default-angles.txt
+core.energy_methods.CartesianBondedEnergy: Read 1434 bb-independent angles.
+basic.io.database: Database file opened: scoring/score_functions/bondlength_bondangle/default-torsions.txt
+core.energy_methods.CartesianBondedEnergy: Read 1 bb-independent torsions.
+basic.io.database: Database file opened: scoring/score_functions/bondlength_bondangle/default-improper.txt
+core.energy_methods.CartesianBondedEnergy: Read 529 bb-independent improper tors.
+core.scoring.etable: Starting energy table calculation
+core.scoring.etable: smooth_etable: changing atr/rep split to bottom of energy well
+core.scoring.etable: smooth_etable: spline smoothing lj etables (maxdis = 6)
+core.scoring.etable: smooth_etable: spline smoothing solvation etables (max_dis = 6)
+core.scoring.etable: Finished calculating energy tables.
+basic.io.database: Database file opened: scoring/score_functions/PairEPotential/pdb_pair_stats_fine
+basic.io.database: Database file opened: scoring/score_functions/InterchainPotential/interchain_env_log.txt
+basic.io.database: Database file opened: scoring/score_functions/InterchainPotential/interchain_pair_log.txt
+basic.io.database: Database file opened: scoring/score_functions/EnvPairPotential/env_log.txt
+basic.io.database: Database file opened: scoring/score_functions/EnvPairPotential/cbeta_den.txt
+basic.io.database: Database file opened: scoring/score_functions/EnvPairPotential/pair_log.txt
+basic.io.database: Database file opened: scoring/score_functions/EnvPairPotential/cenpack_log.txt
+core.scoring.ramachandran: shapovalov_lib::shap_rama_smooth_level of 4( aka highest_smooth ) got activated.
+basic.io.database: Database file opened: scoring/score_functions/rama/shapovalov/kappa25/all.ramaProb
+protocols.jd2.parser.ScoreFunctionLoader: defined score function "beta_sf" with weights "beta_nov16_cart"
+protocols.jd2.parser.TaskOperationLoader: Defined TaskOperation named "init" of type InitializeFromCommandline
+protocols.jd2.parser.TaskOperationLoader: Defined TaskOperation named "repack_res" of type OperateOnResidueSubset
+protocols.jd2.parser.TaskOperationLoader: Defined TaskOperation named "no_repack" of type OperateOnResidueSubset
+protocols.jd2.parser.MoveMapFactoryLoader: Defined MoveMap named "local_mm"
+protocols.rosetta_scripts.RosettaScriptsParser: Defined mover named "mutant" of type MutateResidue
+protocols.relax.RelaxScriptManager: Reading relax scripts list from database.
+core.scoring.ScoreFunctionFactory: SCOREFUNCTION: beta_nov16_cart.wts
+protocols.relax.RelaxScriptManager: Looking for MonomerRelax2019.txt
+protocols.relax.RelaxScriptManager: ================== Reading script file: /usr/local/database/sampling/relax_scripts/MonomerRelax2019.txt ==================
+protocols.relax.RelaxScriptManager: repeat %%nrepeats%%
+protocols.relax.RelaxScriptManager: coord_cst_weight 1.0
+protocols.relax.RelaxScriptManager: scale:fa_rep 0.040
+protocols.relax.RelaxScriptManager: repack
+protocols.relax.RelaxScriptManager: scale:fa_rep 0.051
+protocols.relax.RelaxScriptManager: min 0.01
+protocols.relax.RelaxScriptManager: coord_cst_weight 0.5
+protocols.relax.RelaxScriptManager: scale:fa_rep 0.265
+protocols.relax.RelaxScriptManager: repack
+protocols.relax.RelaxScriptManager: scale:fa_rep 0.280
+protocols.relax.RelaxScriptManager: min 0.01
+protocols.relax.RelaxScriptManager: coord_cst_weight 0.0
+protocols.relax.RelaxScriptManager: scale:fa_rep 0.559
+protocols.relax.RelaxScriptManager: repack
+protocols.relax.RelaxScriptManager: scale:fa_rep 0.581
+protocols.relax.RelaxScriptManager: min 0.01
+protocols.relax.RelaxScriptManager: coord_cst_weight 0.0
+protocols.relax.RelaxScriptManager: scale:fa_rep 1
+protocols.relax.RelaxScriptManager: repack
+protocols.relax.RelaxScriptManager: min 0.00001
+protocols.relax.RelaxScriptManager: accept_to_best
+protocols.relax.RelaxScriptManager: endrepeat
+core.pack.task.xml_util: Object relax reading the following task_operations: Adding the following task operations
+init repack_res no_repack 
+core.select.movemap.util: Found MoveMapFactory local_mm
+protocols.rosetta_scripts.RosettaScriptsParser: Defined mover named "relax" of type FastRelax
+protocols.rosetta_scripts.ParsedProtocol: ParsedProtocol mover with the following settings
+protocols.rosetta_scripts.ParsedProtocol: Added mover "mutant"
+protocols.rosetta_scripts.ParsedProtocol: Added mover "relax"
+protocols.jd2.PDBJobInputter: PDBJobInputter::pose_from_job
+protocols.jd2.PDBJobInputter: filling pose from saved copy prepare_gfp_raw_0001.pdb
+protocols.rosetta_scripts.ParsedProtocol: =======================BEGIN MOVER MutateResidue - mutant=======================
+protocols.rosetta_scripts.ParsedProtocol: =======================BEGIN MOVER FastRelax - relax=======================
+core.energy_methods.CartesianBondedEnergy: Creating new peptide-bonded energy container (225)
+basic.io.database: Database file opened: scoring/score_functions/elec_cp_reps.dat
+core.scoring.elec.util: Read 40 countpair representative atoms
+core.pack.dunbrack.RotamerLibrary: shapovalov_lib_fixes_enable option is true.
+core.pack.dunbrack.RotamerLibrary: Binary rotamer library selected: /usr/local/database/rotamer/beta_nov2016/Dunbrack10.lib.bin
+core.pack.dunbrack.RotamerLibrary: Using Dunbrack library binary file '/usr/local/database/rotamer/beta_nov2016/Dunbrack10.lib.bin'.
+core.pack.dunbrack.RotamerLibrary: Dunbrack 2010 library took 0.048183 seconds to load from binary
+protocols.relax.FastRelax: CMD: repeat  -805.658  0  0  0.55
+protocols.relax.FastRelax: CMD: coord_cst_weight  -805.658  0  0  0.55
+protocols.relax.FastRelax: CMD: scale:fa_rep  -930.562  0  0  0.022
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 635 rotamers at 43 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -931.878  0  0  0.022
+protocols.relax.FastRelax: CMD: scale:fa_rep  -929.542  0  0  0.02805
+protocols.relax.FastRelax: CMD: min  -1156.58  1.16091  1.16091  0.02805
+protocols.relax.FastRelax: CMD: coord_cst_weight  -1156.58  1.16091  1.16091  0.02805
+protocols.relax.FastRelax: CMD: scale:fa_rep  -678.758  1.16091  1.16091  0.14575
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 571 rotamers at 51 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -679.249  1.16091  1.16091  0.14575
+protocols.relax.FastRelax: CMD: scale:fa_rep  -645.773  1.16091  1.16091  0.154
+protocols.relax.FastRelax: CMD: min  -962.044  0.567538  0.567538  0.154
+protocols.relax.FastRelax: CMD: coord_cst_weight  -962.044  0.567538  0.567538  0.154
+protocols.relax.FastRelax: CMD: scale:fa_rep  -841.18  0.567538  0.567538  0.30745
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 508 rotamers at 48 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -841.18  0.567538  0.567538  0.30745
+protocols.relax.FastRelax: CMD: scale:fa_rep  -831.649  0.567538  0.567538  0.31955
+core.optimization.LineMinimizer: Inaccurate G in step= 4.76837e-09 Deriv= -0.514028 Finite Diff= 0.961375
+core.optimization.LineMinimizer: Inaccurate G in step= 5.33483e-09 Deriv= -0.175576 Finite Diff= 0.00873723
+core.optimization.LineMinimizer: Inaccurate G in step= 8.12831e-09 Deriv= -0.12272 Finite Diff= 0.0346306
+core.optimization.LineMinimizer: Inaccurate G in step= 7.54964e-10 Deriv= -0.148054 Finite Diff= 0.00391523
+core.optimization.LineMinimizer: Inaccurate G in step= 7.74719e-09 Deriv= -0.119287 Finite Diff= 0.0272654
+core.optimization.LineMinimizer: Inaccurate G in step= 4.61587e-09 Deriv= -0.152751 Finite Diff= 0.0243833
+core.optimization.LineMinimizer: Inaccurate G in step= 2.75932e-09 Deriv= -0.509813 Finite Diff= 0.173621
+core.optimization.LineMinimizer: Inaccurate G in step= 2.88075e-09 Deriv= -1.0065 Finite Diff= 0.108369
+core.optimization.LineMinimizer: Inaccurate G in step= 1.51959e-06 Deriv= -25.2075 Finite Diff= 2.29686
+core.optimization.Minimizer: Line search failed even after resetting Hessian; aborting at iter#1669
+protocols.relax.FastRelax: CMD: min  -874.018  0.341026  0.341026  0.31955
+protocols.relax.FastRelax: CMD: coord_cst_weight  -874.018  0.341026  0.341026  0.31955
+protocols.relax.FastRelax: CMD: scale:fa_rep  -782.227  0.341026  0.341026  0.55
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 478 rotamers at 46 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -782.227  0.341026  0.341026  0.55
+core.optimization.LineMinimizer: Inaccurate G in step= 9.53674e-09 Deriv= -0.285946 Finite Diff= 0.0101328
+core.optimization.LineMinimizer: Inaccurate G in step= 3.22999e-09 Deriv= -0.0897237 Finite Diff= 0.0189009
+core.optimization.LineMinimizer: Inaccurate G in step= 4.73142e-09 Deriv= -0.127526 Finite Diff= 0.0846748
+core.optimization.LineMinimizer: Inaccurate G in step= 1.39365e-06 Deriv= -29.9688 Finite Diff= -2.27205
+core.optimization.Minimizer: Line search failed even after resetting Hessian; aborting at iter#689
+protocols.relax.FastRelax: CMD: min  -802.691  0.229061  0.229061  0.55
+protocols.relax.FastRelax: MRP: 0  -802.691  -802.691  0.229061  0.229061  
+protocols.relax.FastRelax: CMD: accept_to_best  -802.691  0.229061  0.229061  0.55
+protocols.relax.FastRelax: CMD: endrepeat  -802.691  0.229061  0.229061  0.55
+protocols.relax.FastRelax: CMD: coord_cst_weight  -802.691  0.229061  0.229061  0.55
+protocols.relax.FastRelax: CMD: scale:fa_rep  -934.058  0.229061  0.229061  0.022
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 696 rotamers at 44 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -935.146  0.229061  0.229061  0.022
+protocols.relax.FastRelax: CMD: scale:fa_rep  -933.075  0.229061  0.229061  0.02805
+protocols.relax.FastRelax: CMD: min  -1159.46  1.17052  1.17052  0.02805
+protocols.relax.FastRelax: CMD: coord_cst_weight  -1159.46  1.17052  1.17052  0.02805
+protocols.relax.FastRelax: CMD: scale:fa_rep  -683.325  1.17052  1.17052  0.14575
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 587 rotamers at 51 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -683.442  1.17052  1.17052  0.14575
+protocols.relax.FastRelax: CMD: scale:fa_rep  -650.124  1.17052  1.17052  0.154
+protocols.relax.FastRelax: CMD: min  -961.331  0.592901  0.592901  0.154
+protocols.relax.FastRelax: CMD: coord_cst_weight  -961.331  0.592901  0.592901  0.154
+protocols.relax.FastRelax: CMD: scale:fa_rep  -839.851  0.592901  0.592901  0.30745
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 485 rotamers at 46 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -839.851  0.592901  0.592901  0.30745
+protocols.relax.FastRelax: CMD: scale:fa_rep  -830.272  0.592901  0.592901  0.31955
+protocols.relax.FastRelax: CMD: min  -871.074  0.40226  0.40226  0.31955
+protocols.relax.FastRelax: CMD: coord_cst_weight  -871.074  0.40226  0.40226  0.31955
+protocols.relax.FastRelax: CMD: scale:fa_rep  -776.048  0.40226  0.40226  0.55
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 466 rotamers at 46 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -776.048  0.40226  0.40226  0.55
+core.optimization.LineMinimizer: Inaccurate G in step= 4.76837e-09 Deriv= -0.338197 Finite Diff= 0.463843
+core.optimization.LineMinimizer: Inaccurate G in step= 5.88873e-09 Deriv= -0.247557 Finite Diff= 0.236748
+core.optimization.LineMinimizer: Inaccurate G in step= 4.46118e-08 Deriv= -0.0403336 Finite Diff= 0.00893708
+core.optimization.LineMinimizer: Inaccurate G in step= 9.26262e-09 Deriv= -0.157772 Finite Diff= 0.0307825
+core.optimization.LineMinimizer: Inaccurate G in step= 5.68584e-09 Deriv= -0.00518416 Finite Diff= 0.0473875
+core.optimization.LineMinimizer: Inaccurate G in step= 9.5889e-09 Deriv= -1.16729 Finite Diff= 0.664973
+core.optimization.LineMinimizer: Inaccurate G in step= 9.23443e-09 Deriv= -0.0321595 Finite Diff= 0.0140717
+core.optimization.LineMinimizer: Inaccurate G in step= 1.45676e-06 Deriv= -27.4285 Finite Diff= 9.71218
+core.optimization.Minimizer: Line search failed even after resetting Hessian; aborting at iter#1120
+protocols.relax.FastRelax: CMD: min  -798.763  0.281567  0.281567  0.55
+protocols.relax.FastRelax: MRP: 1  -798.763  -802.691  0.229061  0.229061  
+protocols.relax.FastRelax: CMD: accept_to_best  -798.763  0.281567  0.281567  0.55
+protocols.relax.FastRelax: CMD: endrepeat  -798.763  0.281567  0.281567  0.55
+protocols.relax.FastRelax: CMD: coord_cst_weight  -798.763  0.281567  0.281567  0.55
+protocols.relax.FastRelax: CMD: scale:fa_rep  -932.847  0.281567  0.281567  0.022
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 691 rotamers at 44 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -934.121  0.281567  0.281567  0.022
+protocols.relax.FastRelax: CMD: scale:fa_rep  -931.933  0.281567  0.281567  0.02805
+protocols.relax.FastRelax: CMD: min  -1159.89  1.15682  1.15682  0.02805
+protocols.relax.FastRelax: CMD: coord_cst_weight  -1159.89  1.15682  1.15682  0.02805
+protocols.relax.FastRelax: CMD: scale:fa_rep  -690.768  1.15682  1.15682  0.14575
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 528 rotamers at 50 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -691.774  1.15682  1.15682  0.14575
+protocols.relax.FastRelax: CMD: scale:fa_rep  -659.014  1.15682  1.15682  0.154
+protocols.relax.FastRelax: CMD: min  -963.019  0.610111  0.610111  0.154
+protocols.relax.FastRelax: CMD: coord_cst_weight  -963.019  0.610111  0.610111  0.154
+protocols.relax.FastRelax: CMD: scale:fa_rep  -839.962  0.610111  0.610111  0.30745
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 484 rotamers at 47 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -839.962  0.610111  0.610111  0.30745
+protocols.relax.FastRelax: CMD: scale:fa_rep  -830.258  0.610111  0.610111  0.31955
+core.optimization.LineMinimizer: Inaccurate G in step= 5.96046e-10 Deriv= -1.03379 Finite Diff= 0.920868
+core.optimization.LineMinimizer: Inaccurate G in step= 9.0004e-09 Deriv= -0.122288 Finite Diff= 0.0136923
+core.optimization.LineMinimizer: Inaccurate G in step= 2.52482e-09 Deriv= -0.0651521 Finite Diff= 0.153544
+core.optimization.LineMinimizer: Inaccurate G in step= 4.7527e-09 Deriv= -0.0583178 Finite Diff= 0.0359525
+core.optimization.LineMinimizer: Inaccurate G in step= 6.11068e-09 Deriv= -0.143285 Finite Diff= 0.0261023
+core.optimization.LineMinimizer: Inaccurate G in step= 2.40567e-09 Deriv= -0.10651 Finite Diff= 0.00836465
+core.optimization.LineMinimizer: Inaccurate G in step= 3.19519e-09 Deriv= -0.0216978 Finite Diff= 0.00611986
+core.optimization.LineMinimizer: Inaccurate G in step= 8.45275e-09 Deriv= -0.074751 Finite Diff= 0.0562735
+core.optimization.LineMinimizer: Inaccurate G in step= 1.55276e-06 Deriv= -24.1418 Finite Diff= -0.693451
+core.optimization.Minimizer: Line search failed even after resetting Hessian; aborting at iter#873
+protocols.relax.FastRelax: CMD: min  -870.542  0.417115  0.417115  0.31955
+protocols.relax.FastRelax: CMD: coord_cst_weight  -870.542  0.417115  0.417115  0.31955
+protocols.relax.FastRelax: CMD: scale:fa_rep  -774.662  0.417115  0.417115  0.55
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 472 rotamers at 46 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -774.662  0.417115  0.417115  0.55
+core.optimization.LineMinimizer: Inaccurate G in step= 3.8147e-08 Deriv= -0.861738 Finite Diff= -0.0706911
+core.optimization.LineMinimizer: Inaccurate G in step= 2.66743e-09 Deriv= -0.0695389 Finite Diff= 0.192303
+core.optimization.LineMinimizer: Inaccurate G in step= 2.07138e-06 Deriv= -13.5662 Finite Diff= 1.4577
+core.optimization.Minimizer: Line search failed even after resetting Hessian; aborting at iter#817
+protocols.relax.FastRelax: CMD: min  -797.794  0.320554  0.320554  0.55
+protocols.relax.FastRelax: MRP: 2  -797.794  -802.691  0.229061  0.229061  
+protocols.relax.FastRelax: CMD: accept_to_best  -797.794  0.320554  0.320554  0.55
+protocols.relax.FastRelax: CMD: endrepeat  -797.794  0.320554  0.320554  0.55
+protocols.relax.FastRelax: CMD: coord_cst_weight  -797.794  0.320554  0.320554  0.55
+protocols.relax.FastRelax: CMD: scale:fa_rep  -932.912  0.320554  0.320554  0.022
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 693 rotamers at 44 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -934.607  0.320554  0.320554  0.022
+protocols.relax.FastRelax: CMD: scale:fa_rep  -932.492  0.320554  0.320554  0.02805
+protocols.relax.FastRelax: CMD: min  -1159.99  1.15842  1.15842  0.02805
+protocols.relax.FastRelax: CMD: coord_cst_weight  -1159.99  1.15842  1.15842  0.02805
+protocols.relax.FastRelax: CMD: scale:fa_rep  -691.69  1.15842  1.15842  0.14575
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 574 rotamers at 50 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -692.694  1.15842  1.15842  0.14575
+protocols.relax.FastRelax: CMD: scale:fa_rep  -659.989  1.15842  1.15842  0.154
+protocols.relax.FastRelax: CMD: min  -962.883  0.655998  0.655998  0.154
+protocols.relax.FastRelax: CMD: coord_cst_weight  -962.883  0.655998  0.655998  0.154
+protocols.relax.FastRelax: CMD: scale:fa_rep  -838.917  0.655998  0.655998  0.30745
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 484 rotamers at 47 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -838.917  0.655998  0.655998  0.30745
+protocols.relax.FastRelax: CMD: scale:fa_rep  -829.142  0.655998  0.655998  0.31955
+core.optimization.LineMinimizer: Inaccurate G in step= 4.76837e-09 Deriv= -0.531957 Finite Diff= 0.043869
+core.optimization.LineMinimizer: Inaccurate G in step= 7.52486e-09 Deriv= -0.209045 Finite Diff= 0.018719
+core.optimization.LineMinimizer: Inaccurate G in step= 7.62496e-09 Deriv= -0.295636 Finite Diff= 0.0692859
+core.optimization.LineMinimizer: Inaccurate G in step= 1.74163e-09 Deriv= -0.211837 Finite Diff= 0.44466
+core.optimization.LineMinimizer: Inaccurate G in step= 1.6987e-11 Deriv= -42.4452 Finite Diff= 6.63903
+core.optimization.LineMinimizer: Inaccurate G in step= 1.6601e-06 Deriv= -21.1209 Finite Diff= 4.70006
+core.optimization.Minimizer: Line search failed even after resetting Hessian; aborting at iter#748
+protocols.relax.FastRelax: CMD: min  -870.983  0.433876  0.433876  0.31955
+protocols.relax.FastRelax: CMD: coord_cst_weight  -870.983  0.433876  0.433876  0.31955
+protocols.relax.FastRelax: CMD: scale:fa_rep  -775.135  0.433876  0.433876  0.55
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 471 rotamers at 46 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -775.135  0.433876  0.433876  0.55
+core.optimization.LineMinimizer: Inaccurate G in step= 4.76837e-09 Deriv= -0.122915 Finite Diff= 0.00379086
+core.optimization.LineMinimizer: Inaccurate G in step= 5.99221e-09 Deriv= -0.0306886 Finite Diff= 0.0996622
+core.optimization.LineMinimizer: Inaccurate G in step= 3.34411e-09 Deriv= -0.0703933 Finite Diff= 0.00339962
+core.optimization.LineMinimizer: Inaccurate G in step= 6.55498e-09 Deriv= -0.0447958 Finite Diff= 0.0277844
+core.optimization.LineMinimizer: Inaccurate G in step= 2.25381e-06 Deriv= -11.459 Finite Diff= 7.63561
+core.optimization.Minimizer: Line search failed even after resetting Hessian; aborting at iter#837
+protocols.relax.FastRelax: CMD: min  -797.932  0.347105  0.347105  0.55
+protocols.relax.FastRelax: MRP: 3  -797.932  -802.691  0.229061  0.229061  
+protocols.relax.FastRelax: CMD: accept_to_best  -797.932  0.347105  0.347105  0.55
+protocols.relax.FastRelax: CMD: endrepeat  -797.932  0.347105  0.347105  0.55
+protocols.relax.FastRelax: CMD: coord_cst_weight  -797.932  0.347105  0.347105  0.55
+protocols.relax.FastRelax: CMD: scale:fa_rep  -933.295  0.347105  0.347105  0.022
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 693 rotamers at 44 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -934.906  0.347105  0.347105  0.022
+protocols.relax.FastRelax: CMD: scale:fa_rep  -932.864  0.347105  0.347105  0.02805
+protocols.relax.FastRelax: CMD: min  -1160.44  1.17783  1.17783  0.02805
+protocols.relax.FastRelax: CMD: coord_cst_weight  -1160.44  1.17783  1.17783  0.02805
+protocols.relax.FastRelax: CMD: scale:fa_rep  -692.952  1.17783  1.17783  0.14575
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 578 rotamers at 50 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -693.991  1.17783  1.17783  0.14575
+protocols.relax.FastRelax: CMD: scale:fa_rep  -661.419  1.17783  1.17783  0.154
+protocols.relax.FastRelax: CMD: min  -963.138  0.652333  0.652333  0.154
+protocols.relax.FastRelax: CMD: coord_cst_weight  -963.138  0.652333  0.652333  0.154
+protocols.relax.FastRelax: CMD: scale:fa_rep  -839.717  0.652333  0.652333  0.30745
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 483 rotamers at 47 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -839.717  0.652333  0.652333  0.30745
+protocols.relax.FastRelax: CMD: scale:fa_rep  -829.984  0.652333  0.652333  0.31955
+core.optimization.LineMinimizer: Inaccurate G in step= 4.76837e-09 Deriv= -0.517581 Finite Diff= 0.241756
+core.optimization.LineMinimizer: Inaccurate G in step= 5.39663e-09 Deriv= -0.62391 Finite Diff= 0.0431437
+core.optimization.LineMinimizer: Inaccurate G in step= 7.53771e-09 Deriv= -0.0839762 Finite Diff= 0.0491385
+core.optimization.LineMinimizer: Inaccurate G in step= 2.75196e-09 Deriv= -0.0766424 Finite Diff= 0.166319
+core.optimization.LineMinimizer: Inaccurate G in step= 3.82664e-09 Deriv= -0.0368829 Finite Diff= 0.0410583
+core.optimization.LineMinimizer: Inaccurate G in step= 6.00272e-09 Deriv= -0.0193816 Finite Diff= 0.00859841
+core.optimization.LineMinimizer: Inaccurate G in step= 1.96108e-06 Deriv= -15.1352 Finite Diff= 2.55034
+core.optimization.Minimizer: Line search failed even after resetting Hessian; aborting at iter#729
+protocols.relax.FastRelax: CMD: min  -870.958  0.447028  0.447028  0.31955
+protocols.relax.FastRelax: CMD: coord_cst_weight  -870.958  0.447028  0.447028  0.31955
+protocols.relax.FastRelax: CMD: scale:fa_rep  -775.057  0.447028  0.447028  0.55
+core.pack.task: Packer task: initialize from command line() 
+core.pack.pack_rotamers: built 471 rotamers at 46 positions.
+core.pack.interaction_graph.interaction_graph_factory: Instantiating DensePDInteractionGraph
+protocols.relax.FastRelax: CMD: repack  -775.057  0.447028  0.447028  0.55
+core.optimization.LineMinimizer: Inaccurate G in step= 4.76837e-09 Deriv= -0.807396 Finite Diff= 0.623512
+core.optimization.LineMinimizer: Inaccurate G in step= 5.70542e-09 Deriv= -0.0443067 Finite Diff= 0.0499946
+core.optimization.LineMinimizer: Inaccurate G in step= 1.93445e-06 Deriv= -15.5548 Finite Diff= -1.19992
+core.optimization.Minimizer: Line search failed even after resetting Hessian; aborting at iter#773
+protocols.relax.FastRelax: CMD: min  -797.98  0.363997  0.363997  0.55
+protocols.relax.FastRelax: MRP: 4  -797.98  -802.691  0.229061  0.229061  
+protocols.relax.FastRelax: CMD: accept_to_best  -797.98  0.363997  0.363997  0.55
+protocols.relax.FastRelax: CMD: endrepeat  -797.98  0.363997  0.363997  0.55
+protocols::checkpoint: Deleting checkpoints of FastRelax
+protocols.rosetta_scripts.ParsedProtocol: setting status to success
+protocols.jd2.JobDistributor: flags_r12_m10000_prepare_gfp_raw_0001_0001 reported success in 816 seconds
+protocols.jd2.JobDistributor: no more batches to process... 
+protocols.jd2.JobDistributor: 1 jobs considered, 1 jobs attempted in 816 seconds
+basic.citation_manager.CitationManager: 
+The following Rosetta modules were used during this run of Rosetta, and should be cited:
+
+rosetta_scripts Application's citation(s):
+Fleishman SJ, Leaver-Fay A, Corn JE, Strauch E-M, Khare SD, Koga N, Ashworth J, Murphy P, Richter F, Lemmon G, Meiler J, and Baker D.  (2011).  RosettaScripts: A Scripting Language Interface to the Rosetta Macromolecular Modeling Suite.  PLoS ONE 6(6):e20161.  doi: 10.1371/journal.pone.0020161.
+
+FastRelax Mover's citation(s):
+*Tyka MD, *Keedy DA, André I, Dimaio F, Song Y, Richardson DC, Richardson JS, and Baker D.  (2011).  Alternate states of proteins revealed by detailed energy landscape mapping.  J Mol Biol 405(2):607-18.  doi: 10.1016/j.jmb.2010.11.008.  (*Co-primary authors.)
+
+Khatib F, Cooper S, Tyka MD, Xu K, Makedon I, Popovic Z, Baker D, and Players F.  (2011).  Algorithm discovery by protein folding game players.  Proc Natl Acad Sci USA 108(47):18949-53.  doi: 10.1073/pnas.1115898108.
+
+Maguire JB, Haddox HK, Strickland D, Halabiya SF, Coventry B, Griffin JR, Pulavarti SVSRK, Cummins M, Thieker DF, Klavins E, Szyperski T, DiMaio F, Baker D, and Kuhlman B.  (2021).  Perturbing the energy landscape for improved packing during computational protein design.  Proteins 89(4):436-449.  doi: 10.1002/prot.26030.
+
+
+The following UNPUBLISHED Rosetta modules were used during this run of Rosetta.  Their authors should be included in the author list when this work is published:
+
+NeighborhoodResidueSelector ResidueSelector's author(s):
+Robert Lindner, Natural Sciences and Mathematics, Ruperto-Carola University, Heidelberg, Germany [rlindner@mpimf-heidelberg.mpg.de]
+Jared Adolf-Bryfogle, Schief lab, Scripps Research Institute [jadolfbr@gmail.com]
+Gerard Daniel, Institue for Protein Design, University of Washington [gerardda@uw.edu]
+
+

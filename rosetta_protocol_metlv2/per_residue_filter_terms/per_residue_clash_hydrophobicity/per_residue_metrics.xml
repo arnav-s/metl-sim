@@ -1,0 +1,28 @@
+<ROSETTASCRIPTS>
+
+	<RESIDUE_SELECTORS>
+	</RESIDUE_SELECTORS>
+
+	<SCOREFXNS>
+		<ScoreFunction name="TotalHydrophobic1" weights="total_hydrophobic_weights_version1.wts"/>
+		<ScoreFunction name="TotalHydrophobic2" weights="total_hydrophobic_weights_version2.wts"/>
+	</SCOREFXNS>
+
+	<SIMPLE_METRICS>
+		<PerResidueEnergyMetric name="per_res_hydro1" scorefxn="TotalHydrophobic1" scoretype="ref" custom_type="hydro1" />
+		<PerResidueEnergyMetric name="per_res_hydro2" scorefxn="TotalHydrophobic2" scoretype="ref" custom_type="hydro2" />
+	</SIMPLE_METRICS>
+
+	<FILTERS>
+	</FILTERS>
+
+	<MOVERS>
+		<RunSimpleMetrics name="run_metrics"
+			metrics="per_res_hydro1,per_res_hydro2" />
+	</MOVERS>
+
+	<PROTOCOLS>
+		<Add mover_name="run_metrics" />
+	</PROTOCOLS>
+
+</ROSETTASCRIPTS>

@@ -1,0 +1,116 @@
+##############################################################################################################
+#
+# Rosetta crash log. Please submit the contents of this file to http://crash.rosettacommons.org/
+# or use the script Rosetta/main/source/scripts/python/public/report_crashes.py
+#
+
+[START_CRASH_REPORT]
+[ROSETTA_VERSION]: 2025.37+HEAD.df75a9c48e
+[COMMIT_DATE]: 2025-09-03T12:23:30
+[APPLICATION]: rosetta_scripts
+[MODE]: Release
+[EXTRAS]: default
+[OS]: GNU/Linux
+[COMPILER]: GCC version "9.4.0"
+[STDLIB]: libstdc++ version 20210601
+[START_OPTIONS]
+ -in:file:s=flags_relax_v6_no_cartstructure_0001.pdb -out:prefix=filter_per_residue_ -out:level=100 -out:file:score_only=filter_per_residue.sc -run:preserve_header -parser:protocol=per_residue_metrics.xml -jd2:failed_job_exception=false
+
+[END_OPTIONS]
+
+[START_BACKTRACE]: RAW_LIBC
+/usr/local/bin/libutility.so(backtrace_string[abi:cxx11](int)+0x5a) [0x7ffffcea471a]
+/usr/local/bin/libutility.so(utility::excn::Exception::Exception(char const*, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)+0x103) [0x7ffffcedd963]
+/usr/local/bin/libutility.so(utility::UtilityExitException::UtilityExitException(char const*, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)+0x113) [0x7ffffcea9793]
+/usr/local/bin/libutility.so(utility::exit(char const*, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int)+0x3b) [0x7ffffcea93ab]
+/usr/local/bin/libcore.4.so(core::energy_methods::ElecDensEnergy::setup_for_scoring(core::pose::Pose&, core::scoring::ScoreFunction const&) const+0x46f7) [0x7ffff0ab9697]
+/usr/local/bin/libcore.3.so(core::scoring::ScoreFunction::setup_for_scoring(core::pose::Pose&) const+0x80) [0x7ffff2dd57a0]
+/usr/local/bin/libcore.3.so(core::scoring::ScoreFunction::operator()(core::pose::Pose&) const+0x9c) [0x7ffff2de22fc]
+/usr/local/bin/libcore.3.so(core::scoring::electron_density::calculate_density_nbr(core::pose::Pose&, std::map<unsigned long, double, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, double> > >&, std::map<unsigned long, double, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, double> > >&, std::shared_ptr<core::conformation::symmetry::SymmetryInfo const>, bool, unsigned long)+0x163) [0x7ffff328d0d3]
+/usr/local/bin/libcore.3.so(core::simple_metrics::per_residue_metrics::PerResidueDensityFitMetric::compute_scores(core::pose::Pose&, std::map<unsigned long, double, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, double> > >&, std::map<unsigned long, double, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, double> > >&, std::map<unsigned long, double, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, double> > >&, std::map<unsigned long, double, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, double> > >&) const+0x44a) [0x7ffff2aa6faa]
+/usr/local/bin/libcore.3.so(core::simple_metrics::per_residue_metrics::PerResidueDensityFitMetric::calculate(core::pose::Pose const&) const+0xb86) [0x7ffff2aaafd6]
+/usr/local/bin/libcore.3.so(core::simple_metrics::PerResidueRealMetric::apply(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, core::pose::Pose&, bool) const+0x45) [0x7ffff2a480d5]
+/usr/local/bin/libcore.3.so(core::simple_metrics::SimpleMetric::apply(core::pose::Pose&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool) const+0x105) [0x7ffff2a5bcb5]
+/usr/local/bin/libprotocols.4.so(protocols::analysis::simple_metrics::RunSimpleMetricsMover::apply(core::pose::Pose&)+0xce) [0x7ffff7645fbe]
+/usr/local/bin/libprotocols.1.so(protocols::rosetta_scripts::ParsedProtocol::apply_mover(core::pose::Pose&, protocols::rosetta_scripts::ParsedProtocol::ParsedProtocolStep const&)+0x268) [0x7ffffe1f8d18]
+/usr/local/bin/libprotocols.1.so(protocols::rosetta_scripts::ParsedProtocol::apply_step(core::pose::Pose&, protocols::rosetta_scripts::ParsedProtocol::ParsedProtocolStep const&, bool)+0x21) [0x7ffffe1f91f1]
+/usr/local/bin/libprotocols.1.so(protocols::rosetta_scripts::ParsedProtocol::sequence_protocol(core::pose::Pose&, __gnu_cxx::__normal_iterator<protocols::rosetta_scripts::ParsedProtocol::ParsedProtocolStep const*, std::vector<protocols::rosetta_scripts::ParsedProtocol::ParsedProtocolStep, std::allocator<protocols::rosetta_scripts::ParsedProtocol::ParsedProtocolStep> > >)+0x40) [0x7ffffe1f9a10]
+/usr/local/bin/libprotocols.1.so(protocols::rosetta_scripts::ParsedProtocol::apply(core::pose::Pose&)+0x2be) [0x7ffffe1fdd9e]
+/usr/local/bin/libprotocols.1.so(protocols::jd2::JobDistributor::run_one_job(std::shared_ptr<protocols::moves::Mover>&, long, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, unsigned long&, unsigned long&, bool)+0x2457) [0x7ffffdce2577]
+/usr/local/bin/libprotocols.1.so(protocols::jd2::JobDistributor::go_main(std::shared_ptr<protocols::moves::Mover>)+0x238) [0x7ffffdce3b38]
+/usr/local/bin/libprotocols.1.so(protocols::jd2::FileSystemJobDistributor::go(std::shared_ptr<protocols::moves::Mover>)+0x57) [0x7ffffdccaed7]
+rosetta_scripts(+0x4a96) [0x555555558a96]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf3) [0x7ffffc923083]
+rosetta_scripts(+0x4d3e) [0x555555558d3e]
+
+[END_BACKTRACE]
+
+[FILE]: src/core/energy_methods/ElecDensEnergy.cc
+[LINE]: 153
+[START_MESSAGE]
+[ ERROR ] UtilityExitException
+ERROR: Density scoring function called but no map loaded.
+
+
+
+[END_MESSAGE]
+[END_CRASH_REPORT]
+
+##############################################################################################################
+#
+# Rosetta crash log. Please submit the contents of this file to http://crash.rosettacommons.org/
+# or use the script Rosetta/main/source/scripts/python/public/report_crashes.py
+#
+
+[START_CRASH_REPORT]
+[ROSETTA_VERSION]: 2025.37+HEAD.df75a9c48e
+[COMMIT_DATE]: 2025-09-03T12:23:30
+[APPLICATION]: rosetta_scripts
+[MODE]: Release
+[EXTRAS]: default
+[OS]: GNU/Linux
+[COMPILER]: GCC version "9.4.0"
+[STDLIB]: libstdc++ version 20210601
+[START_OPTIONS]
+ -in:file:s=flags_relax_v6_no_cartstructure_0001.pdb -out:prefix=filter_per_residue_ -out:level=100 -out:file:score_only=filter_per_residue.sc -run:preserve_header -parser:protocol=per_residue_metrics.xml -jd2:failed_job_exception=false
+
+[END_OPTIONS]
+
+[START_BACKTRACE]: RAW_LIBC
+/usr/local/bin/libutility.so(backtrace_string[abi:cxx11](int)+0x5a) [0x7ffffcea471a]
+/usr/local/bin/libutility.so(utility::excn::Exception::Exception(char const*, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)+0x103) [0x7ffffcedd963]
+/usr/local/bin/libutility.so(utility::UtilityExitException::UtilityExitException(char const*, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)+0x113) [0x7ffffcea9793]
+/usr/local/bin/libutility.so(utility::exit(char const*, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int)+0x3b) [0x7ffffcea93ab]
+/usr/local/bin/libcore.4.so(core::energy_methods::ElecDensEnergy::setup_for_scoring(core::pose::Pose&, core::scoring::ScoreFunction const&) const+0x46f7) [0x7ffff0ab9697]
+/usr/local/bin/libcore.3.so(core::scoring::ScoreFunction::setup_for_scoring(core::pose::Pose&) const+0x80) [0x7ffff2dd57a0]
+/usr/local/bin/libcore.3.so(core::scoring::ScoreFunction::operator()(core::pose::Pose&) const+0x9c) [0x7ffff2de22fc]
+/usr/local/bin/libcore.3.so(core::scoring::electron_density::calculate_density_nbr(core::pose::Pose&, std::map<unsigned long, double, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, double> > >&, std::map<unsigned long, double, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, double> > >&, std::shared_ptr<core::conformation::symmetry::SymmetryInfo const>, bool, unsigned long)+0x163) [0x7ffff328d0d3]
+/usr/local/bin/libcore.3.so(core::simple_metrics::per_residue_metrics::PerResidueDensityFitMetric::compute_scores(core::pose::Pose&, std::map<unsigned long, double, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, double> > >&, std::map<unsigned long, double, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, double> > >&, std::map<unsigned long, double, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, double> > >&, std::map<unsigned long, double, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, double> > >&) const+0x44a) [0x7ffff2aa6faa]
+/usr/local/bin/libcore.3.so(core::simple_metrics::per_residue_metrics::PerResidueDensityFitMetric::calculate(core::pose::Pose const&) const+0xb86) [0x7ffff2aaafd6]
+/usr/local/bin/libcore.3.so(core::simple_metrics::PerResidueRealMetric::apply(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, core::pose::Pose&, bool) const+0x45) [0x7ffff2a480d5]
+/usr/local/bin/libcore.3.so(core::simple_metrics::SimpleMetric::apply(core::pose::Pose&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, bool) const+0x105) [0x7ffff2a5bcb5]
+/usr/local/bin/libprotocols.4.so(protocols::analysis::simple_metrics::RunSimpleMetricsMover::apply(core::pose::Pose&)+0xce) [0x7ffff7645fbe]
+/usr/local/bin/libprotocols.1.so(protocols::rosetta_scripts::ParsedProtocol::apply_mover(core::pose::Pose&, protocols::rosetta_scripts::ParsedProtocol::ParsedProtocolStep const&)+0x268) [0x7ffffe1f8d18]
+/usr/local/bin/libprotocols.1.so(protocols::rosetta_scripts::ParsedProtocol::apply_step(core::pose::Pose&, protocols::rosetta_scripts::ParsedProtocol::ParsedProtocolStep const&, bool)+0x21) [0x7ffffe1f91f1]
+/usr/local/bin/libprotocols.1.so(protocols::rosetta_scripts::ParsedProtocol::sequence_protocol(core::pose::Pose&, __gnu_cxx::__normal_iterator<protocols::rosetta_scripts::ParsedProtocol::ParsedProtocolStep const*, std::vector<protocols::rosetta_scripts::ParsedProtocol::ParsedProtocolStep, std::allocator<protocols::rosetta_scripts::ParsedProtocol::ParsedProtocolStep> > >)+0x40) [0x7ffffe1f9a10]
+/usr/local/bin/libprotocols.1.so(protocols::rosetta_scripts::ParsedProtocol::apply(core::pose::Pose&)+0x2be) [0x7ffffe1fdd9e]
+/usr/local/bin/libprotocols.1.so(protocols::jd2::JobDistributor::run_one_job(std::shared_ptr<protocols::moves::Mover>&, long, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&, unsigned long&, unsigned long&, bool)+0x2457) [0x7ffffdce2577]
+/usr/local/bin/libprotocols.1.so(protocols::jd2::JobDistributor::go_main(std::shared_ptr<protocols::moves::Mover>)+0x238) [0x7ffffdce3b38]
+/usr/local/bin/libprotocols.1.so(protocols::jd2::FileSystemJobDistributor::go(std::shared_ptr<protocols::moves::Mover>)+0x57) [0x7ffffdccaed7]
+rosetta_scripts(+0x4a96) [0x555555558a96]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf3) [0x7ffffc923083]
+rosetta_scripts(+0x4d3e) [0x555555558d3e]
+
+[END_BACKTRACE]
+
+[FILE]: src/core/energy_methods/ElecDensEnergy.cc
+[LINE]: 153
+[START_MESSAGE]
+[ ERROR ] UtilityExitException
+ERROR: Density scoring function called but no map loaded.
+
+
+
+[END_MESSAGE]
+[END_CRASH_REPORT]
+

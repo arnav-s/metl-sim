@@ -1,0 +1,30 @@
+<ROSETTASCRIPTS>
+
+	<RESIDUE_SELECTORS>
+	</RESIDUE_SELECTORS>
+
+	<SCOREFXNS>
+	</SCOREFXNS>
+
+	<SIMPLE_METRICS>
+<!--		<PerResidueSasaMetric name="per_res_sasa" />-->
+<!--		<SidechainNeighborCountMetric name="per_res_neighbors" />-->
+<!--		<HbondMetric name="per_res_hbonds" />-->
+<!--		<PeptideInternalHbondsMetric name="per_res_internal_hbonds" />-->
+<!--		<PerResidueClashMetric name="per_res_clashes" />-->
+		<PerResidueSapScoreMetric name="per_res_sap" />
+	</SIMPLE_METRICS>
+
+	<FILTERS>
+	</FILTERS>
+
+	<MOVERS>
+		<RunSimpleMetrics name="run_metrics"
+			metrics="per_res_sap" />
+	</MOVERS>
+
+	<PROTOCOLS>
+		<Add mover_name="run_metrics" />
+	</PROTOCOLS>
+
+</ROSETTASCRIPTS>
