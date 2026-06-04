@@ -1,0 +1,21 @@
+<ROSETTASCRIPTS>
+  <SCOREFXNS>
+    <ScoreFunction name="beta_sf" weights="beta_jan25_cart"/>
+  </SCOREFXNS>
+
+  <MOVERS>
+
+    <FastRelax name="relax"
+               scorefxn="beta_sf"
+               disable_design="true"
+               cartesian="true"
+               repeats="5"/>
+  </MOVERS>
+
+  <PROTOCOLS>
+
+    <Add mover_name="relax"/>
+  </PROTOCOLS>
+
+  <OUTPUT scorefxn="beta_sf"/>
+</ROSETTASCRIPTS>

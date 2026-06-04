@@ -52,14 +52,9 @@ def clean_pdb_wrapper(keep_ligand, rosetta_main_dir, working_dir, chain, conda_p
 
 def run_clean_pdb(rosetta_main_dir, working_dir, chain, conda_pack_env=None):
     clean_pdb_script_fn = abspath(join(rosetta_main_dir, "tools/protein_tools/scripts/clean_pdb.py"))
-    if conda_pack_env:
-        conda_pack_env_abspath = abspath(f"{conda_pack_env}/bin/activate")
-        clean_pdb_cmd = f"source {conda_pack_env_abspath} && python {clean_pdb_script_fn} structure.pdb {chain}"
-        shell = True
-    else:
-        # Use standard Conda environment
-        clean_pdb_cmd = ['conda', 'run', '-n', 'clean_pdb', clean_pdb_script_fn, 'structure.pdb', chain]
-        shell = False
+    # Use standard Conda environment
+    clean_pdb_cmd = ['python', clean_pdb_script_fn, 'structure.pdb', chain]
+    shell = False
 
     # run the clean pdb script
     clean_out_fn = join(working_dir, "clean_pdb.out")
@@ -82,13 +77,8 @@ def run_clean_pdb_keep_ligand(rosetta_main_dir, working_dir, conda_pack_env=None
     clean_pdb_keep_ligand_fn = "source/src/apps/public/relax_w_allatom_cst/clean_pdb_keep_ligand.py"
     clean_pdb_script_fn = abspath(join(rosetta_main_dir, clean_pdb_keep_ligand_fn))
 
-    if conda_pack_env:
-        conda_pack_env_abspath = abspath(f"{conda_pack_env}/bin/activate")
-        clean_pdb_cmd = f"source {conda_pack_env_abspath} && python {clean_pdb_script_fn} structure.pdb -ignorechain"
-        shell = True
-    else:
-        clean_pdb_cmd = ['conda', 'run', '-n', 'clean_pdb', clean_pdb_script_fn, 'structure.pdb', '-ignorechain']
-        shell = False
+    clean_pdb_cmd = ['python', clean_pdb_script_fn, 'structure.pdb', '-ignorechain']
+    shell = False
 
     # run the clean pdb script
     clean_out_fn = join(working_dir, "clean_pdb.out")
@@ -114,8 +104,8 @@ def run_relax(rosetta_main_dir, working_dir, cleaned_pdb_fn,  num_procs, nstruct
     # path to the rosetta database
     database_path = "/usr/local/database"
 
-    relax_cmd = ['mpirun', '-np', str(num_procs), 
-                 'relax', '-database', database_path, '-s', cleaned_pdb_fn,
+    # replace relax with rosetta_scripts
+    relax_cmd = ['rosetta_scripts', '-database', database_path, '-s', cleaned_pdb_fn,
                  '-nstruct', str(nstruct), '@flags_prepare_relax']
     relax_out_fn = join(working_dir, "relax.out")
     with open(relax_out_fn, "w") as f:
@@ -153,6 +143,8 @@ def main(args):
     print("output directory is: {}".format(output_dir), flush=True)
 
     template_dir = "templates/prepare_wd_template"
+
+    print(f'template_dir: {template_dir}')
     working_dir = join(output_dir, "working_dir")
 
     # set up the working directory
@@ -186,7 +178,7 @@ if __name__ == "__main__":
                         help="The main directory of the rosetta distribution containing the binaries and "
                              "other files that are needed for this script (does not have to be full distribution)",
                         type=str,
-                        default="rosetta_minimal")
+                        default="/app")
 
     parser.add_argument("--pdb_fn",
                         help="the PDB file to prepare",
@@ -220,4 +212,3 @@ if __name__ == "__main__":
                         help="Optional path to a Conda-pack environment to use")
 
     main(parser.parse_args())
-
