@@ -117,7 +117,7 @@ def parse_scores(working_dir):
     scores_fn = join(working_dir, "score.sc")
 
     # load the scores.sc file into a pandas dataframe
-    df = pd.read_csv(scores_fn, delim_whitespace=True, skiprows=1)
+    df = pd.read_csv(scores_fn, sep=r'\s+', skiprows=1)
 
     # get all structures with lowest energy (there may be multiple structures with same lowest energy)
     lowest_energy_df = df[df.total_score == df.total_score.min()]
