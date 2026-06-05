@@ -88,7 +88,7 @@
                 <Add filter_name="exposed_total" />
                 <Add filter_name="exposed_polars" />
                 <Add filter_name="exposed_np_AFIMLWVY" />
-		<Add filter_name="total_hydrophobic" />
+				<Add filter_name="total_hydrophobic" />
                 <Add filter_name="total_hydrophobic_AFILMVWY" />
                 <Add filter_name="pack" />
                 <Add filter_name="unsat_hbond" />

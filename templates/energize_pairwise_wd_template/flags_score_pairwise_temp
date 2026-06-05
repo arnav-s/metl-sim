@@ -1,0 +1,4 @@
+-s structure_{idx_placeholder}.pdb
+-score:weights {relax_weights}
+-{relax_weights}
+-out:file:silent pairwise_scores.tbl

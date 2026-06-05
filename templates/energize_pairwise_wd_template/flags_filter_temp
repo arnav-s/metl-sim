@@ -1,4 +1,4 @@
--s structure_0001.pdb
+-s structure_{idx_placeholder}.pdb
 -parser:protocol filter_3rd.xml
 -out:prefix filter_
 -jd2:failed_job_exception false

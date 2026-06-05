@@ -1,3 +1,0 @@
--s structure.pdb
--ignore_unrecognized_res
--out:file:scorefile relax.sc
