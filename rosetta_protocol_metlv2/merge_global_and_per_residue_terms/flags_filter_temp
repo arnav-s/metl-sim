@@ -1,0 +1,7 @@
+-s flags_relax_v6_no_cartstructure_0001.pdb
+-parser:protocol filter_3rd_and_per_residue_metrics.xml
+-out:prefix filter_3rd_per_residue_
+-jd2:failed_job_exception false
+-out:file:score_only filter_3rd_per_residue.sc
+-out:level 100
+-run:preserve_header true
