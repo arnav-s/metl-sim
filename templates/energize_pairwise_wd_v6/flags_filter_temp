@@ -1,5 +1,5 @@
 -s structure_{idx_placeholder}.pdb
--parser:protocol filter_3rd.xml
+-parser:protocol filter_3rd_and_per_residue_metrics.xml
 -out:prefix filter_
 -jd2:failed_job_exception false
 -out:file:score_only filter.sc
